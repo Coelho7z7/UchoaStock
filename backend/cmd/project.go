@@ -6,30 +6,46 @@ import (
 	"path/filepath"
 )
 
-// prepareProjectDirectory garante que o processo esteja rodando com o
-// diretório de trabalho na raiz do projeto (onde ficam as pastas
-// frontend/ e backend/), independente de onde o binário foi chamado.
-func prepareProjectDirectory() error {
+// prepareProjectDirectory põe o diretório de trabalho na raiz do projeto
+// (onde fica o go.mod), independente de onde o programa foi chamado.
+// Serve para o caminho padrão do banco (backend/data/uchoastock.db), que
+// é relativo. HTML, CSS e JS não dependem mais disso: vêm embutidos no
+// binário. Se não achar a raiz (um binário copiado sozinho para outro
+// lugar, por exemplo), segue na pasta atual: com DB_PATH absoluto, como
+// em produção, nada muda.
+func prepareProjectDirectory() {
 	dir, err := os.Getwd()
 	if err != nil {
-		return err
+		return
 	}
 
 	for {
-		if _, err := os.Stat(filepath.Join(dir, "frontend", "html", "index.html")); err == nil {
-			return os.Chdir(dir)
+		if isProjectRoot(dir) {
+			_ = os.Chdir(dir)
+			return
 		}
 		// Pasta com o nome do repositório (o git clone cria "UchoaStock"),
 		// para rodar a partir da pasta de cima dele.
-		nestedProject := filepath.Join(dir, "UchoaStock")
-		if _, err := os.Stat(filepath.Join(nestedProject, "frontend", "html", "index.html")); err == nil {
-			return os.Chdir(nestedProject)
+		if nested := filepath.Join(dir, "UchoaStock"); isProjectRoot(nested) {
+			_ = os.Chdir(nested)
+			return
 		}
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return fmt.Errorf("frontend/html/index.html não encontrado")
+			fmt.Println("Aviso: raiz do projeto (go.mod) não encontrada; usando a pasta atual.")
+			return
 		}
 		dir = parent
 	}
+}
+
+// isProjectRoot diz se dir é a raiz do UchôaStock: tem o go.mod e a pasta
+// backend/ (o go.mod sozinho poderia ser de outro projeto acima deste).
+func isProjectRoot(dir string) bool {
+	if _, err := os.Stat(filepath.Join(dir, "go.mod")); err != nil {
+		return false
+	}
+	info, err := os.Stat(filepath.Join(dir, "backend"))
+	return err == nil && info.IsDir()
 }

@@ -1,0 +1,168 @@
+{{ template "app" (layout . "materiais") }}
+
+{{ define "title" }}Estoque{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">{{ if .Scope.Current }}{{ .Scope.Current.Name }}{{ else }}Todas as obras{{ end }}</span>
+                        <h3>Controle de estoque</h3>
+                        <p>{{ if and .Scope.CanMove .Scope.CanManage }}Informe a quantidade e registre a entrada ou a saída de cada material nesta obra. A observação diz quem retirou ou para qual etapa foi.{{ else }}Consulta do saldo de cada material.{{ end }}</p>
+                    </div>
+                </header>
+
+                <nav class="materials-tabs" aria-label="Opções de materiais">
+                    <a href="/materiais">Materiais</a>
+                    {{ if .CanEditMaterial }}<a href="/alterar-material">Alterar material</a>{{ end }}
+                    <a class="material-tab-active" href="/estoque">Estoque</a>
+                </nav>
+
+                <form class="materials-filter" method="GET" action="/estoque" data-live-search>
+                    <input type="search" name="busca" value="{{ .Search }}" placeholder="Buscar material ou ID" aria-label="Buscar material">
+                    <button type="submit">Buscar</button>
+                </form>
+
+                {{ if .OpenInventoryID }}
+                <p class="scope-notice">Obra em inventário ({{ .OpenInventoryCode }}): entradas e saídas estão bloqueadas até ele ser aprovado ou cancelado.{{ if .Nav.CanViewInventory }} <a href="/inventarios/{{ .OpenInventoryID }}">Abrir inventário</a>{{ end }}</p>
+                {{ end }}
+
+                {{ if not .Scope.Current }}
+                <p class="scope-notice">Você está vendo a soma de todas as obras. Para registrar entrada ou saída, selecione uma obra no topo.</p>
+                {{ else if not .Scope.CanMove }}
+                <p class="scope-notice">Obra concluída: só consulta. Entrada e saída não são aceitas.</p>
+                {{ else if not .Scope.CanManage }}
+                <p class="scope-notice">{{ if and .Scope.CanMoveStock .Scope.OwnSiteName }}Você movimenta o estoque da obra {{ .Scope.OwnSiteName }}. Esta aqui é só para consulta.{{ else if .Scope.CanMoveStock }}Você ainda não está vinculado a nenhuma obra: por enquanto, só consulta. Peça a um administrador para definir a sua obra.{{ else }}Sua conta é de consulta: entrada e saída são registradas pelo almoxarife ou pelo gestor da obra.{{ end }}</p>
+                {{ end }}
+
+                {{ if .Message }}
+                <p class="form-success" role="status">
+                    {{ .Message }}
+                </p>
+                {{ end }}
+
+                {{ if .Error }}
+                <p class="form-error" role="alert">
+                    {{ .Error }}
+                </p>
+                {{ end }}
+
+                <div class="page-table stock-table" data-live-region="tabela">
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Material</th>
+                            <th>{{ if .Scope.Current }}Saldo na obra{{ else }}Saldo total{{ end }}</th>
+                            {{ if and .Scope.CanMove .Scope.CanManage }}<th>Movimentar</th>{{ end }}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {{ range .Materials }}
+
+                        <tr>
+
+                            <td>{{ .ID }}</td>
+
+                            <td>{{ .Name }}</td>
+
+                            <td>
+                                <span class="stock-quantity {{ .StockStatus }}">{{ .FormattedQuantity }}</span><span class="unit-label">{{ .Unit }}</span>
+                            </td>
+
+                            {{ if and $.Scope.CanMove $.Scope.CanManage }}
+                            <td class="material-actions">
+
+                                <form
+                                    id="stock-form-{{ .ID }}"
+                                    action="/estoque"
+                                    method="POST">
+                                </form>
+
+                                <input type="hidden" name="material_id" value="{{ .ID }}" form="stock-form-{{ .ID }}">
+                                <input type="hidden" name="obra_id" value="{{ $.Scope.SiteID }}" form="stock-form-{{ .ID }}">
+                                <input type="hidden" name="busca" value="{{ $.Search }}" form="stock-form-{{ .ID }}">
+                                <input type="hidden" name="pagina" value="{{ $.Page }}" form="stock-form-{{ .ID }}">
+
+                                <input
+                                    class="stock-qty-input"
+                                    type="text"
+                                    inputmode="decimal"
+                                    name="quantidade"
+                                    placeholder="Qtd."
+                                    aria-label="Quantidade de {{ .Name }} ({{ .Unit }})"
+                                    form="stock-form-{{ .ID }}"
+                                    required>
+
+                                <input
+                                    class="stock-note-input"
+                                    type="text"
+                                    name="observacao"
+                                    maxlength="120"
+                                    placeholder="Etapa / quem retirou"
+                                    aria-label="Observação da movimentação de {{ .Name }}"
+                                    form="stock-form-{{ .ID }}">
+
+                                <button
+                                    type="submit"
+                                    name="acao"
+                                    value="entrada"
+                                    form="stock-form-{{ .ID }}">
+                                    <span aria-hidden="true">+</span> Entrada
+                                </button>
+
+                                <button
+                                    class="button-secondary"
+                                    type="submit"
+                                    name="acao"
+                                    value="saida"
+                                    form="stock-form-{{ .ID }}">
+                                    <span aria-hidden="true">−</span> Saída
+                                </button>
+
+                            </td>
+                            {{ end }}
+
+                        </tr>
+
+                        {{ else }}
+
+                        <tr>
+                            <td colspan="{{ if and $.Scope.CanMove $.Scope.CanManage }}4{{ else }}3{{ end }}">
+                                <div class="empty-table"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg><span>{{ if $.Search }}Nenhum material encontrado para essa busca.{{ else }}Nenhum material cadastrado.{{ end }}</span></div>
+                            </td>
+                        </tr>
+
+                        {{ end }}
+
+                    </tbody>
+
+                </table>
+                </div>
+
+                <div data-live-region="paginacao">
+                {{ if gt .TotalPages 1 }}
+
+                <div class="pagination">
+
+                    {{ if gt .Page 1 }}
+                    <a href="/estoque?pagina={{ .PreviousPage }}{{ if .Search }}&busca={{ .Search }}{{ end }}">« Anterior</a>
+                    {{ end }}
+
+                    <span>Página {{ .Page }} de {{ .TotalPages }}</span>
+
+                    {{ if lt .Page .TotalPages }}
+                    <a href="/estoque?pagina={{ .NextPage }}{{ if .Search }}&busca={{ .Search }}{{ end }}">Próxima »</a>
+                    {{ end }}
+
+                </div>
+
+                {{ end }}
+                </div>
+
+            </section>
+{{ end }}

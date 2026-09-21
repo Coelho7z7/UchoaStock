@@ -1,0 +1,39 @@
+{{/* Topbar das telas internas: botão do menu no celular, título da tela,
+     seletor de obra e quem está logado. Recebe o layoutView. */}}
+{{ define "topbar" }}
+            <header class="topbar">
+                <button class="mobile-menu-button" type="button" aria-label="Abrir menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <h2>{{ block "heading" .Page }}{{ template "title" . }}{{ end }}</h2>
+
+                {{ template "site-switcher" .Page.Scope }}
+
+                <div class="user">
+                    <span class="user-name">{{ .Page.User.Name }}</span>
+                    {{ template "role-badge" .Page.User.Role }}
+                </div>
+            </header>
+{{- end }}
+
+{{/* Selo do cargo ao lado do nome. "basico" é a conta de demonstração,
+     só de leitura. */}}
+{{ define "role-badge" }}
+                    {{- if eq . "superadmin" }}
+                    <span class="user-role user-role-superadmin">SuperAdmin</span>
+                    {{- else if eq . "admin" }}
+                    <span class="user-role user-role-admin">Administrador</span>
+                    {{- else if eq . "gestor" }}
+                    <span class="user-role user-role-manager">Gestor</span>
+                    {{- else if eq . "almoxarife" }}
+                    <span class="user-role user-role-storekeeper">Almoxarife</span>
+                    {{- else if eq . "auditor" }}
+                    <span class="user-role user-role-auditor">Auditor</span>
+                    {{- else if eq . "basico" }}
+                    <span class="user-role user-role-user">Usuário</span>
+                    {{- else }}
+                    <span class="user-role user-role-user">Solicitante</span>
+                    {{- end }}
+{{- end }}

@@ -1,0 +1,57 @@
+{{/* Página 404. É a mesma resposta para endereço que não existe e para
+     solicitação fora do alcance de quem pede: não dá para saber se ela
+     existe. Com sessão, aparece dentro do layout normal; sem sessão, só o
+     cartão (não há usuário para a barra lateral nem para o seletor). */}}
+{{ if .User }}{{ template "app" (layout . "") }}{{ else }}<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+{{ template "meta" }}
+    <title>UchôaStock - {{ template "title" . }}</title>
+{{ template "base-styles" }}
+{{ template "app-styles" }}
+</head>
+
+<body class="access-denied-page">
+    <main class="access-denied-content">
+        <section class="access-denied-card" role="alert" aria-live="assertive">
+            <span class="access-denied-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                    <path d="M8.5 8.5l5 5M13.5 8.5l-5 5"></path>
+                </svg>
+            </span>
+            <div>
+                <span class="access-denied-kicker">Erro 404</span>
+                <h1>Página não encontrada</h1>
+                <p>O endereço não existe ou não está disponível para a sua conta. Confira o link ou volte para uma tela do sistema.</p>
+                <a class="button-secondary" href="/">Ir para o login</a>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
+{{ end }}
+
+{{ define "title" }}Página não encontrada{{ end }}
+{{ define "body-class" }}not-found-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">Erro 404</span>
+                        <h3>Página não encontrada</h3>
+                        <p>O endereço não existe ou não está disponível para a sua conta. Confira o link ou volte para uma tela do sistema.</p>
+                        <div class="page-hero-actions">
+                            <a class="new-material-button" href="/dashboard">Ir para o dashboard</a>
+                            <button class="button-secondary" type="button" onclick="history.back()">Voltar</button>
+                        </div>
+                    </div>
+                </header>
+
+            </section>
+{{ end }}

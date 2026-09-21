@@ -1,0 +1,48 @@
+{{/* Layout das telas internas (as que têm barra lateral). A página chama
+     no topo, passando o item do menu que fica aceso:
+
+         {{ template "app" (layout . "materiais") }}
+
+     e define os blocos abaixo. Só "title" e "content" são obrigatórios.
+
+         title       texto da aba do navegador, depois de "UchôaStock - "
+         heading     título da topbar (sem ele, repete o title)
+         body-class  classe do <body>, para o CSS específico da tela
+         content     o conteúdo da tela, abaixo da topbar
+         scripts     <script> da tela, depois do app.js
+
+     Dentro dos blocos, "." são os dados da tela (os mesmos que o handler
+     passou), como antes. */}}
+{{ define "app" }}<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+{{ template "meta" }}
+    <title>UchôaStock - {{ template "title" .Page }}</title>
+{{ template "base-styles" }}
+{{ template "app-styles" }}
+</head>
+
+<body class="{{ block "body-class" .Page }}{{ end }}">
+
+    <div class="dashboard">
+
+{{ template "sidebar" . }}
+        <div class="mobile-sidebar-overlay" aria-hidden="true"></div>
+
+        <main class="main-content">
+
+{{ template "topbar" . }}
+
+{{ template "content" .Page }}
+
+        </main>
+
+    </div>
+
+    <script src="{{ asset "js/app.js" }}"></script>
+{{ block "scripts" .Page }}{{ end }}
+</body>
+
+</html>
+{{ end }}

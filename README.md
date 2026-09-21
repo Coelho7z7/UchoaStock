@@ -28,6 +28,21 @@ O UchôaStock é organizado em módulos:
 
 3. **Banco de Dados (SQLite):** persistência dos dados do sistema
 
+```
+backend/
+  cmd/        ponto de entrada: servidor e comandos de linha
+  web/        rotas, handlers, sessão, permissões, CSRF, templates
+  services/   regras de negócio e todo o SQL
+  database/   conexão, tabelas e migrações
+  models/     structs de dados
+  utils/      validação de entrada
+frontend/
+  templates/  layouts/, partials/ e pages/ (HTML)
+  static/     css/, js/ e images/
+```
+
+HTML, CSS e JS são embutidos no binário: depois de alterar algum deles, reinicie o servidor.
+
 ## Requirements
 
 * Go 1.26+
@@ -50,7 +65,7 @@ As contas padrão são criadas automaticamente na inicialização, pelo seed, qu
 | Auditor | `auditor@gmail.com` | `auditor` | `SEED_AUDITOR_PASSWORD` |
 | Usuário (somente leitura) | `usuario@gmail.com` | `basico` | `SEED_USUARIO_PASSWORD` |
 
-Os cargos disponíveis são Administrador (`admin`), Gestor (`gestor`), Almoxarife (`almoxarife`), Solicitante (`solicitante`) e Auditor (`auditor`). O que cada um pode fazer está em `backend/cmd/permissions.go` e no `INFORMACOES.MD`. A conta `usuario@gmail.com` é de demonstração: vê as telas, mas não altera nada. Bancos antigos são migrados sozinhos na inicialização: `gerente` vira `gestor` e `basico` vira `solicitante` (menos a conta de demonstração).
+Os cargos disponíveis são Administrador (`admin`), Gestor (`gestor`), Almoxarife (`almoxarife`), Solicitante (`solicitante`) e Auditor (`auditor`). O que cada um pode fazer está em `backend/web/permissions.go` e no `INFORMACOES.MD`. A conta `usuario@gmail.com` é de demonstração: vê as telas, mas não altera nada. Bancos antigos são migrados sozinhos na inicialização: `gerente` vira `gestor` e `basico` vira `solicitante` (menos a conta de demonstração).
 
 Se a variável de uma conta não estiver definida, **a conta não é criada**, e o log de inicialização diz qual variável falta. Nenhuma senha é escrita no log.
 

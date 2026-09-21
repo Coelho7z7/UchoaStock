@@ -111,28 +111,51 @@ go run ./backend/cmd verify-stock [--migrate]
 O projeto é em camadas. **Respeite a direção das dependências:**
 
 ```
-frontend/  (HTML + CSS + JS)
+frontend/  (templates HTML + CSS + JS, embutidos no binário)
     ↓ HTTP
-backend/cmd/        handlers HTTP, rotas, sessão, autorização
+backend/web/        handlers HTTP, rotas, sessão, autorização, CSRF
     ↓ chama
 backend/services/   regra de negócio e TODO o SQL
     ↓ usa
 backend/database/   conexão e schema
     ↓
 SQLite (backend/data/uchoastock.db)
+
+backend/cmd/        ponto de entrada: sobe o servidor e os comandos de CLI
 ```
 
-**Handler nunca escreve SQL.** Se um handler em `backend/cmd/` precisa de dados, ele chama uma função de `backend/services/`. Sem exceção.
+**Handler nunca escreve SQL.** Se um handler em `backend/web/` precisa de dados, ele chama uma função de `backend/services/`. Sem exceção.
 
 Responsabilidade de cada camada:
 
 | Camada | Faz | Não faz |
 |---|---|---|
-| `cmd/` | ler form/JSON, validar sessão e permissão, renderizar template, montar resposta | SQL, cálculo de negócio |
+| `cmd/` | `main.go` (inicialização e servidor), `cli.go` (comandos administrativos), `verify_stock.go` | handler HTTP, SQL |
+| `web/` | ler form/JSON, validar sessão e permissão, renderizar template, montar resposta; rotas em `routes.go`, templates em `render.go` | SQL, cálculo de negócio |
 | `services/` | regra de negócio, transações, todo o SQL | renderizar HTML, ler `*http.Request` |
 | `models/` | structs de dados | lógica |
 | `database/` | conectar, criar tabelas, migrar | consultas de negócio |
 | `utils/` | validação e leitura de entrada, sem estado | acessar banco |
+
+### Templates e arquivos estáticos
+
+```
+frontend/
+  frontend.go            //go:embed: embute templates/ e static/ no binário
+  templates/
+    layouts/app.html     esqueleto das telas internas (head, sidebar, topbar)
+    partials/            head, sidebar, topbar, seletor de obra
+    pages/               uma tela por arquivo (login.html, materials.html...)
+  static/                servido em /css, /js e /images
+    css/  js/  images/
+```
+
+- **Tela interna nova:** crie `pages/<nome>.html` começando por `{{ template "app" (layout . "<rota do menu>") }}` e defina `title` e `content` (opcionais: `heading`, `body-class`, `scripts`). O handler chama `render(w, status, "<nome>", data)`. **Nunca** copie sidebar ou topbar para a página: item de menu novo vai em `partials/sidebar.html`.
+- Os dados da tela precisam ter `User`, `Scope`, `Nav` e `CanManageUsers`: a sidebar e a topbar leem esses campos.
+- Os templates são carregados **uma vez**, na inicialização (`render.go`); um erro de sintaxe impede o servidor de subir e quebra o `TestTemplatesLoad`.
+- CSS e JS entram com `{{ asset "css/pages.css" }}`, que acrescenta `?v=<hash do arquivo>`. **Não** escreva `?v=` à mão.
+- Como tudo é embutido, **mudou HTML, CSS ou JS, reinicie o `go run`**.
+- **CSRF:** `routes.go` envolve o roteador com `http.CrossOriginProtection`, que recusa POST vindo de outro site. Por isso **nenhum GET pode alterar dados**.
 
 Ao criar um arquivo novo, siga o padrão de nomes já existente: `material_create.go`, `material_query.go`, `stock_service.go`, `user_auth.go`.
 
@@ -164,7 +187,7 @@ Comentários: os novos ficam em português. Os arquivos antigos em `services/` t
 
 ## 5. Permissões e cargos
 
-O acesso é **por ação**, não por nome de cargo. A fonte única da verdade é o map `rolePermissions` em `backend/cmd/permissions.go`, e toda checagem passa por `can(usuario, permissao)`. **Nunca** escreva `if user.Role == "admin"` num handler: use a permissão da ação. A matriz completa está em `INFORMACOES.MD`, seção PERMISSÕES; o fluxo e as regras da solicitação de material, na seção SOLICITAÇÕES. Ninguém aprova a própria solicitação: a exceção do superadmin é a permissão `solicitacao.aprovar_propria`, que nenhum cargo recebe — **não** troque por um `if role == "superadmin"`.
+O acesso é **por ação**, não por nome de cargo. A fonte única da verdade é o map `rolePermissions` em `backend/web/permissions.go`, e toda checagem passa por `can(usuario, permissao)`. **Nunca** escreva `if user.Role == "admin"` num handler: use a permissão da ação. A matriz completa está em `INFORMACOES.MD`, seção PERMISSÕES; o fluxo e as regras da solicitação de material, na seção SOLICITAÇÕES. Ninguém aprova a própria solicitação: a exceção do superadmin é a permissão `solicitacao.aprovar_propria`, que nenhum cargo recebe — **não** troque por um `if role == "superadmin"`.
 
 | Cargo | Pode |
 |---|---|
@@ -175,7 +198,7 @@ O acesso é **por ação**, não por nome de cargo. A fonte única da verdade é
 | `solicitante` | pede material (solicitação) na própria obra e vê **só as próprias** solicitações e movimentações |
 | `auditor` | só leitura: vê as solicitações da própria obra e vê e exporta todas as movimentações |
 
-A permissão diz **o que** a pessoa faz; a obra diz **onde**. Cada usuário que não é admin tem **uma** obra (tabela `usuario_obras`; a regra de uma só é garantida em `services.setUserSiteTx`) e entra no sistema por ela. As regras que juntam as duas coisas moram em `backend/cmd/authorization.go` (`canMoveStockAt`, `canEditSite`) e as da gestão de usuários em `permissions.go` (`canManageUser`, `canAssignRole`, `canAssignSite`).
+A permissão diz **o que** a pessoa faz; a obra diz **onde**. Cada usuário que não é admin tem **uma** obra (tabela `usuario_obras`; a regra de uma só é garantida em `services.setUserSiteTx`) e entra no sistema por ela. As regras que juntam as duas coisas moram em `backend/web/authorization.go` (`canMoveStockAt`, `canEditSite`) e as da gestão de usuários em `permissions.go` (`canManageUser`, `canAssignRole`, `canAssignSite`).
 
 Os cargos antigos `gerente` e `basico` são migrados na inicialização para `gestor` e `solicitante`. Todo `INSERT` em `usuarios` informa o `role`: o DEFAULT da coluna ainda é `'basico'`.
 
@@ -191,7 +214,7 @@ Regras que o código garante e que **não devem ser afrouxadas**:
 
 O CSS é um design system com tokens. **Nunca escreva valor solto**: cor,
 espaço, tamanho de fonte e raio saem sempre de `var(--token)`, definidos em
-`frontend/css/tokens.css`.
+`frontend/static/css/tokens.css`.
 
 ### ⚠️ O UchôaStock é um sistema de TEMA ESCURO
 
@@ -232,7 +255,7 @@ O `app.js` e os templates dependem delas pelo nome. Renomear quebra em runtime, 
 - Aplicadas pelo JS: todas as `gs-*` · `.modal-closing` · `.mobile-menu-open`.
 - Os modais abrem pelo atributo **`hidden`**, não por classe. Por isso existe a regra `.modal-create[hidden] { display: none }` — sem ela os modais nascem abertos.
 
-Antes de renomear qualquer classe, confira se ela aparece em `frontend/js/app.js`.
+Antes de renomear qualquer classe, confira se ela aparece em `frontend/static/js/app.js`.
 
 ---
 

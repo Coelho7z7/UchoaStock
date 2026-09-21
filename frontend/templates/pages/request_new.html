@@ -1,0 +1,92 @@
+{{ template "app" (layout . "solicitacoes") }}
+
+{{ define "title" }}Nova solicitação{{ end }}
+{{ define "body-class" }}requests-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">Pedido de material</span>
+                        <h3>Nova solicitação</h3>
+                        <p>{{ if and .Site (not .Blocker) }}Para a obra <strong>{{ .Site.Name }}</strong>. {{ end }}Escolha os materiais e as quantidades. Depois de criada, a solicitação espera a aprovação do gestor; o almoxarife entrega o material.</p>
+                    </div>
+                </header>
+
+                {{ if .Error }}
+                <p class="form-error" role="alert">{{ .Error }}</p>
+                {{ end }}
+
+                {{ if .Blocker }}
+
+                <p class="scope-notice">{{ .Blocker }}</p>
+                <p><a class="button-secondary" href="/solicitacoes">Voltar para as solicitações</a></p>
+
+                {{ else }}
+
+                <form class="request-form" action="/solicitacoes/nova" method="POST">
+                    <input type="hidden" name="obra_id" value="{{ .Scope.SiteID }}">
+
+                    <div class="request-items" data-request-items data-max-items="{{ .MaxItems }}">
+                        {{ range $row := .Rows }}
+                        <div class="request-item" data-request-item>
+                            <div class="request-item-field">
+                                <span class="request-item-label">Material</span>
+                                <select name="material_id" aria-label="Material">
+                                    <option value="">Escolha o material</option>
+                                    {{ range $.Materials }}<option value="{{ .ID }}" data-unit="{{ .Unit }}"{{ if eq .ID $row.MaterialID }} selected{{ end }}>{{ .Name }} ({{ .Unit }}) · saldo {{ .FormattedBalance }}</option>{{ end }}
+                                </select>
+                            </div>
+                            <div class="request-item-field">
+                                <span class="request-item-label">Quantidade</span>
+                                <div class="request-item-quantity">
+                                    <input type="text" inputmode="decimal" name="quantidade" value="{{ $row.Quantity }}" placeholder="Qtd." aria-label="Quantidade">
+                                    <span class="unit-label" data-item-unit></span>
+                                </div>
+                            </div>
+                            <button type="button" class="button-secondary request-item-remove" data-remove-item>Remover</button>
+                        </div>
+                        {{ end }}
+                    </div>
+
+                    <template id="request-item-template">
+                        <div class="request-item" data-request-item>
+                            <div class="request-item-field">
+                                <span class="request-item-label">Material</span>
+                                <select name="material_id" aria-label="Material">
+                                    <option value="">Escolha o material</option>
+                                    {{ range $.Materials }}<option value="{{ .ID }}" data-unit="{{ .Unit }}">{{ .Name }} ({{ .Unit }}) · saldo {{ .FormattedBalance }}</option>{{ end }}
+                                </select>
+                            </div>
+                            <div class="request-item-field">
+                                <span class="request-item-label">Quantidade</span>
+                                <div class="request-item-quantity">
+                                    <input type="text" inputmode="decimal" name="quantidade" value="" placeholder="Qtd." aria-label="Quantidade">
+                                    <span class="unit-label" data-item-unit></span>
+                                </div>
+                            </div>
+                            <button type="button" class="button-secondary request-item-remove" data-remove-item>Remover</button>
+                        </div>
+                    </template>
+
+                    <div class="request-add-row">
+                        <button type="button" class="button-secondary" data-add-item>+ Adicionar material</button>
+                        <small class="request-hint">Até {{ .MaxItems }} materiais. Cada material aparece uma vez só.</small>
+                    </div>
+
+                    <div class="request-item-field">
+                        <label for="request-note">Observação (destino ou etapa)</label>
+                        <input id="request-note" type="text" name="observacao" maxlength="200" value="{{ .Note }}" placeholder="Ex.: Bloco B - laje">
+                    </div>
+
+                    <div class="request-form-actions">
+                        <button class="save-button" type="submit">Criar solicitação</button>
+                        <a class="button-secondary" href="/solicitacoes">Cancelar</a>
+                    </div>
+                </form>
+
+                {{ end }}
+
+            </section>
+{{ end }}

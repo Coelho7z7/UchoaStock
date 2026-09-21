@@ -1,0 +1,23 @@
+{{/* Peças do <head> comuns a todas as telas. O endereço de cada CSS vem
+     de asset, que acrescenta ?v=<hash do arquivo>: quando o arquivo muda,
+     o endereço muda junto e o navegador baixa de novo, sem ninguém
+     precisar lembrar de trocar um número à mão. */}}
+
+{{ define "meta" }}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{- end }}
+
+{{/* Fonte e CSS que toda tela carrega, inclusive o login. */}}
+{{ define "base-styles" }}
+    <link rel="preload" href="/css/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset "css/tokens.css" }}">
+    <link rel="stylesheet" href="{{ asset "css/base.css" }}">
+    <link rel="stylesheet" href="{{ asset "css/components.css" }}">
+{{- end }}
+
+{{/* CSS das telas internas (barra lateral, topbar e o conteúdo). */}}
+{{ define "app-styles" }}
+    <link rel="stylesheet" href="{{ asset "css/layout.css" }}">
+    <link rel="stylesheet" href="{{ asset "css/pages.css" }}">
+{{- end }}

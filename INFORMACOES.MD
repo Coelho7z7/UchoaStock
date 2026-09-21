@@ -5,9 +5,15 @@ Sem venda, sem preço, sem PDV: só entrada, saída e alerta do que está acaban
 
 BACKEND
 
-cmd/
-- main.go — servidor
-- project.go — projeto
+cmd/  (ponto de entrada)
+- main.go — inicialização e servidor web
+- cli.go — comandos administrativos (reset-password, create-user, rename-user, change-email)
+- verify_stock.go — comando verify-stock
+- project.go — acha a raiz do projeto (para o caminho padrão do banco)
+
+web/  (camada HTTP)
+- routes.go — todas as rotas e a proteção contra CSRF
+- render.go — carrega os templates uma vez, render() e arquivos estáticos com cache
 - auth_handler.go — login
 - authorization.go — middleware withUser, acesso negado e regras por obra
 - permissions.go — permissões por ação: o que cada cargo pode fazer
@@ -60,11 +66,21 @@ utils/
 
 FRONTEND
 
-html/
-- index.html — login
+frontend.go — embute templates/ e static/ no binário (go:embed)
+
+templates/layouts/
+- app.html — esqueleto das telas internas: head, sidebar, topbar, conteúdo e scripts
+
+templates/partials/
+- head.html — meta e CSS comuns (com versão automática ?v=hash)
+- sidebar.html — barra lateral e contadores de solicitação
+- topbar.html — topbar e selo do cargo
+- site_switcher.html — seletor de obra da topbar
+
+templates/pages/
+- login.html — login
 - dashboard.html — dashboard
 - sites.html — obras
-- site_switcher.html — seletor de obra da topbar e contadores de solicitação da barra lateral (incluído pelas telas internas)
 - materials.html — materiais
 - edit_material.html — editar material
 - stock.html — estoque
@@ -80,7 +96,7 @@ html/
 - access_denied.html — acesso negado
 - not_found.html — página 404 (com sessão, no layout do sistema; sem sessão, só o cartão). Também é a resposta para solicitação fora do alcance
 
-css/  (design system — a ordem dos <link> importa, é cascata)
+static/css/  (design system — a ordem dos <link> importa, é cascata)
 - tokens.css — :root: cores, espaçamento, tipografia, raios, sombras
 - base.css — reset, tipografia, foco/acessibilidade
 - components.css — botões, inputs, tabelas, cards, modais, badges, toasts
@@ -128,7 +144,7 @@ fica sem obra (NULL).
 
 PERMISSÕES
 
-O acesso é por ação, não por nome de cargo. backend/cmd/permissions.go tem
+O acesso é por ação, não por nome de cargo. backend/web/permissions.go tem
 a lista de permissões e o map rolePermissions (cargo -> permissões), que é
 a fonte única da verdade. Toda checagem passa por can(usuario, permissao).
 Criar um cargo = uma linha nesse map + o cargo em services.validRoles.
