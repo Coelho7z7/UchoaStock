@@ -1723,10 +1723,7 @@ body:has(.modal-create:not([hidden]), .modal-edit:not([hidden])) {
     background: var(--color-white-10);
 }
 
-/* ============================================================
-   Modal de confirmação (substitui o confirm() do navegador)
-   Criado inteiro pelo app.js — ids e classes são contrato com ele.
-   ============================================================ */
+/* Modal de confirmação, no lugar do confirm() do navegador.
 
    O app.js cria esse modal inteiro, então os ids e as classes daqui
    precisam bater com os de lá. Ele nasce com class="modal-create" e

@@ -1,11 +1,18 @@
 /* Design tokens do UchôaStock.
 
-/* ---------- Tipografia: Inter auto-hospedada ----------
-   Os arquivos ficam em frontend/static/css/fonts/, servidos em /css/fonts/
-   junto com o CSS (o caminho abaixo é relativo a este arquivo).
-   font-display: swap — o texto aparece na hora com a fonte do sistema
-   e troca quando a Inter chega; em obra, com rede ruim, isso evita
-   tela em branco. */
+   Toda cor, espaçamento, tamanho de fonte e raio do sistema sai daqui.
+   Os outros arquivos CSS não usam valor solto, sempre var(--token): assim,
+   para mudar uma cor, basta mexer num lugar só. */
+
+/* Fonte Inter, servida pelo próprio sistema.
+
+   Os arquivos ficam em frontend/static/css/fonts/ e são servidos em
+   /css/fonts/, junto com o CSS (o caminho abaixo é relativo a este
+   arquivo), então não precisou de rota nova.
+
+   Com font-display: swap o texto aparece na hora com a fonte do sistema e
+   troca quando a Inter termina de carregar. Na obra, com internet ruim,
+   isso evita ficar olhando tela em branco. */
 
 @font-face {
     font-family: 'Inter';
