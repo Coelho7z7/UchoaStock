@@ -41,7 +41,13 @@
 }
 
 /* Manchas de luz ao fundo. Elas ficam atrás de tudo; o seletor
-   abaixo levanta o conteúdo real para z-index 1. */
+   abaixo levanta o conteúdo real para z-index 1.
+
+   Os laços desta tela (manchas, respiro do gráfico, pontos e o ponto
+   que percorre a linha) têm um número de voltas que dá cerca de um
+   minuto, e não infinite: com o login aberto e parado no celular,
+   animação sem fim só gasta bateria. Cada laço termina no mesmo quadro
+   em que começa, então parar não dá salto. */
 .login-hero::before,
 .login-hero::after {
     content: "";
@@ -59,7 +65,7 @@
     top: -120px;
     left: -100px;
     background: radial-gradient(circle, var(--color-brand) 0%, transparent 70%);
-    animation: flutuarMancha 9s ease-in-out infinite;
+    animation: gs-login-blob-float 9s ease-in-out 7;
 }
 
 .login-hero::after {
@@ -72,10 +78,10 @@
        ponto mais à direita no mesmo instante (66%): a luz de fundo
        parece seguir o dado. backwards segura a posição inicial durante
        o atraso, senão a mancha daria um salto ao começar. */
-    animation: acompanharMancha 14s ease-in-out 2.6s infinite backwards;
+    animation: gs-login-blob-follow 14s ease-in-out 2.6s 4 both;
 }
 
-@keyframes acompanharMancha {
+@keyframes gs-login-blob-follow {
 
     0%,
     100% {
@@ -87,7 +93,7 @@
     }
 }
 
-@keyframes flutuarMancha {
+@keyframes gs-login-blob-float {
 
     0%,
     100% {
@@ -165,10 +171,10 @@
     clip-path: inset(var(--band-top) var(--logo-wipe) var(--band-bottom) 0);
     /* both segura o recorte inicial durante o atraso; sem isso a barra
        apareceria inteira e só então sumiria para se desenhar. */
-    animation: desenharLogoLinha 0.65s var(--ease-out) both;
+    animation: gs-login-logo-line-draw 0.65s var(--ease-out) both;
 }
 
-@keyframes desenharLogoLinha {
+@keyframes gs-login-logo-line-draw {
     from {
         --logo-wipe: 100%;
     }
@@ -231,17 +237,17 @@
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-tight);
     color: var(--color-text-invert);
-    animation: entradaMarca 0.9s var(--ease-out) 0.80s both;
+    animation: gs-login-brand-in 0.9s var(--ease-out) 0.80s both;
 }
 
 .login-hero p {
     max-width: 380px;
     font-size: var(--text-sm);
     color: var(--color-text-sidebar);
-    animation: entradaMarca 1.1s var(--ease-out) 1.05s both;
+    animation: gs-login-brand-in 1.1s var(--ease-out) 1.05s both;
 }
 
-@keyframes entradaMarca {
+@keyframes gs-login-brand-in {
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -263,34 +269,34 @@
     width: 100%;
     height: 42%;
     pointer-events: none;
-    animation: respirarGrafico 4s ease-in-out 2.2s infinite;
+    animation: gs-login-chart-breathe 4s ease-in-out 2.2s 15;
 }
 
 /* A linha se desenha: o traço começa todo "fora" e entra. */
 .hero-chart polyline:first-child {
     stroke-dasharray: 700;
     stroke-dashoffset: 700;
-    animation: desenharLinha 1.8s ease-out 0.4s forwards;
+    animation: gs-login-line-draw 1.8s ease-out 0.4s forwards;
 }
 
 .hero-chart polyline:last-child {
     opacity: 0;
-    animation: areaEntrada 1.2s ease-out 1.4s forwards;
+    animation: gs-login-area-in 1.2s ease-out 1.4s forwards;
 }
 
-@keyframes desenharLinha {
+@keyframes gs-login-line-draw {
     to {
         stroke-dashoffset: 0;
     }
 }
 
-@keyframes areaEntrada {
+@keyframes gs-login-area-in {
     to {
         opacity: 0.5;
     }
 }
 
-@keyframes respirarGrafico {
+@keyframes gs-login-chart-breathe {
 
     0%,
     100% {
@@ -316,8 +322,8 @@
     stroke-linecap: round;
     opacity: 0;
     animation:
-        acenderPonto 0.9s var(--ease-out) 1.9s forwards,
-        respirarPonto 5s ease-in-out 2.8s infinite;
+        gs-login-dot-light 0.9s var(--ease-out) 1.9s forwards,
+        gs-login-dot-breathe 5s ease-in-out 2.8s 12;
 }
 
 /* Durações de respiro diferentes deixam os pontos fora de compasso, o
@@ -330,13 +336,13 @@
     animation-duration: 0.9s, 8s;
 }
 
-@keyframes acenderPonto {
+@keyframes gs-login-dot-light {
     to {
         opacity: 0.45;
     }
 }
 
-@keyframes respirarPonto {
+@keyframes gs-login-dot-breathe {
 
     0%,
     100% {
@@ -393,12 +399,12 @@
         offset-rotate: 0deg;
         offset-distance: 0%;
         animation:
-            percorrerGrafico 14s linear 2.6s infinite,
-            pulsoVisivel 14s linear 2.6s infinite;
+            gs-login-chart-travel 14s linear 2.6s 4,
+            gs-login-pulse-visible 14s linear 2.6s 4;
     }
 }
 
-@keyframes percorrerGrafico {
+@keyframes gs-login-chart-travel {
     0% {
         offset-distance: 0%;
     }
@@ -409,7 +415,7 @@
     }
 }
 
-@keyframes pulsoVisivel {
+@keyframes gs-login-pulse-visible {
 
     0%,
     100% {
@@ -454,10 +460,10 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     opacity: 0;
-    animation: cardEntrada 0.7s var(--ease-out) 0.2s forwards;
+    animation: gs-login-card-in 0.7s var(--ease-out) 0.2s forwards;
 }
 
-@keyframes cardEntrada {
+@keyframes gs-login-card-in {
     from {
         opacity: 0;
         transform: translateY(18px);
@@ -511,7 +517,7 @@
     stroke-linecap: butt;
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
-    animation: desenharLinha 1.1s var(--ease-out) forwards;
+    animation: gs-login-line-draw 1.1s var(--ease-out) forwards;
 }
 
 /* Entrada em cascata: cada faixa começa um pouco depois da anterior. */
@@ -610,10 +616,10 @@
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     transform: translateX(-50%);
-    animation: alertaEntrada 480ms cubic-bezier(0.22, 1.2, 0.36, 1);
+    animation: gs-login-alert-in 480ms cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 
-@keyframes alertaEntrada {
+@keyframes gs-login-alert-in {
     from {
         opacity: 0;
         transform: translateX(-50%) translateY(16px);
@@ -721,7 +727,7 @@
         transform: none;
     }
 
-    @keyframes alertaEntrada {
+    @keyframes gs-login-alert-in {
         from {
             opacity: 0;
             transform: translateY(16px);

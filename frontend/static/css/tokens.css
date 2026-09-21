@@ -5,9 +5,8 @@
    ============================================================ */
 
 /* ---------- Tipografia: Inter auto-hospedada ----------
-   Os arquivos ficam em frontend/css/fonts/ porque o backend já serve
-   http.Dir("frontend/css") e o FileServer do Go entrega subpastas.
-   Assim não foi preciso criar rota nova para as fontes.
+   Os arquivos ficam em frontend/static/css/fonts/, servidos em /css/fonts/
+   junto com o CSS (o caminho abaixo é relativo a este arquivo).
    font-display: swap — o texto aparece na hora com a fonte do sistema
    e troca quando a Inter chega; em obra, com rede ruim, isso evita
    tela em branco. */
@@ -161,7 +160,6 @@
     --color-white-45: rgba(255, 255, 255, 0.45);
     --color-brand-shine: rgba(30, 100, 190, 0.18);
     --color-brand-glow: rgba(30, 100, 190, 0.35);
-    --color-brand-glow-off: rgba(30, 100, 190, 0);
     --color-danger-ring: rgba(185, 28, 28, 0.22);
 
     /* Azul da marca um pouco mais aceso, para o hover do botão principal:
@@ -188,6 +186,11 @@
     --space-6: 32px;
     --space-7: 48px;
     --space-8: 64px;
+    /* Meios-passos, só para ajuste fino de alinhamento (um texto de
+       apoio colado no de cima, um ícone descido 1px para alinhar com a
+       linha). Não servem para espaçar blocos. */
+    --space-px: 1px;
+    --space-half: 2px;
 
     /* ---------- Tipografia ----------
        8 degraus no lugar dos 33 font-size que existiam, mais dois
@@ -226,6 +229,7 @@
 
     /* ---------- Forma ---------- */
 
+    --radius-xs: 3px;
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
@@ -285,6 +289,27 @@
     /* Alvo mínimo de toque. 44px é a recomendação da WCAG 2.5.5 e aqui
        tem motivo prático: o sistema é usado de luva, em obra. */
     --touch-target: 44px;
+
+    /* ---------- Ícones ----------
+       Tamanho do desenho (o SVG), não da área de toque: botão de ícone
+       continua com --touch-target em volta. */
+
+    --icon-xs: 13px;
+    /* dentro de selos */
+    --icon-sm: 16px;
+    /* dentro de botões e o spinner */
+    --icon-md: 18px;
+    /* menu lateral, toast, campo de busca */
+    --icon-lg: 20px;
+    /* botões só de ícone, cartões do dashboard, botão do menu */
+    --icon-xl: 24px;
+    /* modais de confirmação */
+
+    /* ---------- Larguras de componente ---------- */
+
+    --toast-width: 380px;
+    --stock-qty-width: 96px;
+    --stock-note-width: 200px;
 }
 
 /* ---------- Breakpoints ----------
@@ -302,4 +327,13 @@
      640px       o filtro de materiais já cabe em 3 colunas no celular
                  em paisagem, antes do tablet
      900px       o login só comporta hero + formulário lado a lado a
-                 partir daqui; em 768px o hero ficaria espremido      */
+                 partir daqui; em 768px o hero ficaria espremido
+
+   max-width só para o que EXISTE apenas no celular, e não para
+   corrigir o desktop. Hoje são dois casos, marcados com "Só no
+   celular" no comentário de cada bloco:
+     - a tabela que vira cartões (layout.css, e os ajustes de linha e
+       de ações em pages.css): no desktop ela é tabela de verdade, e
+       desfazer o cartão propriedade por propriedade seria mais frágil
+     - a entrada em cascata dos itens da gaveta do menu (layout.css):
+       do tablet em diante a sidebar é fixa e não abre               */

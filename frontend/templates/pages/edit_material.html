@@ -50,7 +50,7 @@
 
                             {{ range .Materials }}
 
-                            <tr>
+                            <tr data-row-id="{{ .ID }}">
 
                                 <td>#{{ .ID }}</td>
 
@@ -172,47 +172,3 @@
             </section>
 {{ end }}
 
-{{ define "scripts" }}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('edit-material-modal');
-            const close = document.getElementById('close-edit-material');
-            const id = document.getElementById('edit-material-id');
-            const name = document.getElementById('edit-material-name');
-            const unit = document.getElementById('edit-material-unit');
-            const minimum = document.getElementById('edit-material-minimum');
-
-            // Só o botão de lápis tem data-id. A lixeira também usa a classe
-            // edit-material-button (pelo visual), e o seletor antigo pegava
-            // as duas: clicar em remover abria o modal de edição vazio.
-            document.querySelectorAll('.edit-material-button[data-id]').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    id.value = button.dataset.id;
-                    name.value = button.dataset.name;
-                    unit.value = button.dataset.unit;
-                    minimum.value = button.dataset.minimum;
-                    modal.hidden = false;
-                    name.focus();
-                });
-            });
-
-            // Aberto pelo servidor (?editar=ID): já chega com o foco no nome.
-            if (!modal.hidden) name.focus();
-
-            const closeModal = function () {
-                modal.hidden = true;
-                // Tira o ?editar da URL, para um F5 não reabrir o modal.
-                if (location.search.indexOf('editar=') !== -1) {
-                    history.replaceState(null, '', location.pathname);
-                }
-            };
-            close.addEventListener('click', closeModal);
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) closeModal();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hidden) closeModal();
-            });
-        });
-    </script>
-{{ end }}

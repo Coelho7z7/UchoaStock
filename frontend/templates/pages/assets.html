@@ -132,39 +132,3 @@
             </section>
 {{ end }}
 
-{{ define "scripts" }}
-    <script>
-        // Modal de cadastro. Sem JS, o link "Novo bem" abre a mesma tela com
-        // ?novo=1, e o servidor já manda o modal aberto.
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('asset-modal');
-            if (!modal) return;
-            const number = document.getElementById('asset-number');
-
-            const closeModal = function (event) {
-                if (event) event.preventDefault();
-                modal.hidden = true;
-                // Tira o ?novo da URL, para um F5 não reabrir o modal.
-                if (location.search.indexOf('novo=') !== -1) {
-                    history.replaceState(null, '', location.pathname);
-                }
-            };
-
-            document.getElementById('open-create-asset').addEventListener('click', function (event) {
-                event.preventDefault();
-                const oldError = modal.querySelector('.form-error');
-                if (oldError) oldError.remove();
-                modal.hidden = false;
-                number.focus();
-            });
-            document.getElementById('close-asset-modal').addEventListener('click', closeModal);
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) closeModal();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hidden) closeModal();
-            });
-            if (!modal.hidden) number.focus();
-        });
-    </script>
-{{ end }}

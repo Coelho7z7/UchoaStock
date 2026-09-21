@@ -9,7 +9,9 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"path"
+	"strconv"
 	"strings"
 
 	"uchoastock/frontend"
@@ -109,6 +111,17 @@ func render(w http.ResponseWriter, status int, page string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
 	_, _ = content.WriteTo(w)
+}
+
+// successURL monta o endereço de volta depois de uma ação que deu certo:
+// ?sucesso= escolhe a mensagem, e &destaque= (quando highlightID > 0) é a
+// linha que o app.js acende na tabela, para a pessoa achar o que mudou.
+func successURL(path, success string, highlightID int) string {
+	query := url.Values{"sucesso": {success}}
+	if highlightID > 0 {
+		query.Set("destaque", strconv.Itoa(highlightID))
+	}
+	return path + "?" + query.Encode()
 }
 
 // formStatus é o status de uma tela com formulário: 400 quando o envio

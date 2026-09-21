@@ -156,37 +156,3 @@
             </section>
 {{ end }}
 
-{{ define "scripts" }}
-    <script>
-        // Modal de iniciar inventário. Com JS o link abre o modal na hora;
-        // sem JS, ele leva a ?iniciar=1 e o servidor manda o modal aberto.
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('start-inventory-modal');
-            if (!modal) return;
-            const site = document.getElementById('start-inventory-site');
-
-            const openModal = function (event) {
-                if (event) event.preventDefault();
-                modal.hidden = false;
-                site.focus();
-            };
-            const closeModal = function (event) {
-                if (event) event.preventDefault();
-                modal.hidden = true;
-                if (location.search.indexOf('iniciar=') !== -1) {
-                    history.replaceState(null, '', location.pathname);
-                }
-            };
-
-            document.getElementById('open-start-inventory').addEventListener('click', openModal);
-            document.getElementById('close-start-inventory').addEventListener('click', closeModal);
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) closeModal();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hidden) closeModal();
-            });
-            if (!modal.hidden) site.focus();
-        });
-    </script>
-{{ end }}

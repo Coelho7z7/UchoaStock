@@ -109,6 +109,9 @@ func siteHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 
 		var err error
 		success := ""
+		// highlightID é a obra que mudou: a linha dela acende depois do
+		// redirecionamento. No cadastro fica 0 (o service não devolve o ID).
+		highlightID := 0
 
 		switch r.FormValue("acao") {
 		case "cadastrar":
@@ -137,6 +140,7 @@ func siteHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 			}
 			err = services.UpdateSiteWeb(form.ID, form.Name, form.City, form.Manager, form.Status, can(user, PermReopenSite))
 			success = "atualizada"
+			highlightID = form.ID
 		case "situacao":
 			// Botões Paralisar, Retomar, Reabrir e Encerrar da lista. Aqui
 			// se confere quem pode mexer nesta obra (canEditSite); quais
@@ -154,6 +158,7 @@ func siteHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 			}
 			err = services.ChangeSiteStatus(id, form.Status, can(user, PermReopenSite))
 			success = statusChangeSuccess[form.Status]
+			highlightID = id
 		default:
 			http.Error(w, "Ação inválida", http.StatusBadRequest)
 			return
@@ -164,7 +169,7 @@ func siteHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 			return
 		}
 		if err == nil {
-			http.Redirect(w, r, "/obras?sucesso="+success, http.StatusSeeOther)
+			http.Redirect(w, r, successURL("/obras", success, highlightID), http.StatusSeeOther)
 			return
 		}
 

@@ -238,9 +238,10 @@ table {
    parte, que é igual nas duas telas e por isso fica parada — só o
    conteúdo troca.
 
-   Navegador sem suporte ignora o bloco inteiro, e o app.js usa o fade
-   antigo (ver enablePageTransition). Quem pediu menos movimento no
-   sistema não recebe nenhum dos dois. */
+   Navegador sem suporte ignora o bloco inteiro e troca de tela direto.
+   Não há mais fade feito pelo JS: ele precisava segurar cada clique por
+   160 ms antes de navegar, e velocidade vale mais que o efeito. Quem
+   pediu menos movimento no sistema não recebe a transição. */
 @media (prefers-reduced-motion: no-preference) {
 
     @view-transition {
@@ -252,21 +253,21 @@ table {
     }
 
     ::view-transition-old(root) {
-        animation: vt-fade-out var(--duration-fast) ease both;
+        animation: gs-vt-fade-out var(--duration-fast) ease both;
     }
 
     ::view-transition-new(root) {
-        animation: vt-fade-in var(--duration-base) var(--ease-out) both;
+        animation: gs-vt-fade-in var(--duration-base) var(--ease-out) both;
     }
 }
 
-@keyframes vt-fade-out {
+@keyframes gs-vt-fade-out {
     to {
         opacity: 0;
     }
 }
 
-@keyframes vt-fade-in {
+@keyframes gs-vt-fade-in {
     from {
         opacity: 0;
     }

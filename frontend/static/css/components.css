@@ -191,8 +191,8 @@ button svg,
 .delete-user-button svg,
 .empty-table-cta svg,
 .close-modal-button svg {
-    width: 16px;
-    height: 16px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
     flex: 0 0 auto;
 }
 
@@ -289,7 +289,7 @@ select {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8B8CC' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right var(--space-3) center;
-    background-size: 18px;
+    background-size: var(--icon-md);
     padding-right: var(--space-7);
 }
 
@@ -322,7 +322,7 @@ select {
     background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A8B8CC' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right var(--space-3) center;
-    background-size: 18px;
+    background-size: var(--icon-md);
     border: 1px solid var(--color-border-input);
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -470,8 +470,8 @@ input.form-error:focus {
 }
 
 .eye svg {
-    width: 20px;
-    height: 20px;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -585,8 +585,8 @@ input.form-error:focus {
    relogio) no lugar dos caracteres tipograficos que havia antes —
    mais legiveis e coerentes com o resto da interface. */
 .card-icon svg {
-    width: 19px;
-    height: 19px;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
     stroke-width: 1.7;
 }
 
@@ -669,8 +669,7 @@ input.form-error:focus {
 
 .materials-section,
 .activity-section,
-.low-stock-section,
-.stock-table {
+.low-stock-section {
     padding: var(--space-5);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -773,17 +772,17 @@ input.form-error:focus {
 
     .page-hero::after,
     .access-denied-card::before {
-        animation: brand-waves-draw 1100ms var(--ease-emphasized) 150ms backwards;
+        animation: gs-brand-waves-draw 1100ms var(--ease-emphasized) 150ms backwards;
     }
 
     .modal-create-content::before,
     .modal-edit-content::before,
     .modal-confirm-content::before {
-        animation: brand-waves-draw var(--duration-slower) var(--ease-emphasized) 80ms backwards;
+        animation: gs-brand-waves-draw var(--duration-slower) var(--ease-emphasized) 80ms backwards;
     }
 }
 
-@keyframes brand-waves-draw {
+@keyframes gs-brand-waves-draw {
     from {
         clip-path: inset(0 100% 0 0);
     }
@@ -958,8 +957,7 @@ input.form-error:focus {
     color: var(--color-info-text);
     background: var(--color-info-tint);
     border-color: var(--color-info);
-    animation: badge-entrada 260ms var(--ease-out) both,
-        brilho-superadmin 2.8s ease-in-out 400ms infinite;
+    animation: gs-badge-in 260ms var(--ease-out) both;
 }
 
 .role-badge-admin {
@@ -1000,8 +998,8 @@ input.form-error:focus {
 
 .role-badge svg,
 .badge-icon svg {
-    width: 13px;
-    height: 13px;
+    width: var(--icon-xs);
+    height: var(--icon-xs);
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -1025,33 +1023,19 @@ input.form-error:focus {
     border: 1px solid var(--color-brand-border);
     border-radius: var(--radius-full);
     cursor: default;
-    animation: badge-entrada 260ms var(--ease-out) both,
-        brilho-superadmin 2.8s ease-in-out 400ms infinite;
+    animation: gs-badge-in 260ms var(--ease-out) both;
 }
 
 .role-protected svg {
-    width: 13px;
-    height: 13px;
+    width: var(--icon-xs);
+    height: var(--icon-xs);
     flex: 0 0 auto;
 }
 
-@keyframes badge-entrada {
+@keyframes gs-badge-in {
     from {
         opacity: 0;
         transform: translateY(-4px) scale(0.94);
-    }
-}
-
-/* Brilho interno que respira, marcando a conta protegida. */
-@keyframes brilho-superadmin {
-
-    0%,
-    100% {
-        box-shadow: inset 0 0 0 1px var(--color-brand-glow-off);
-    }
-
-    50% {
-        box-shadow: inset 0 0 18px var(--color-brand-glow);
     }
 }
 
@@ -1254,10 +1238,10 @@ input.form-error:focus {
 
 .materials-tabs a:hover::after {
     opacity: 1;
-    animation: tabs-sheen 620ms ease both;
+    animation: gs-tabs-sheen 620ms ease both;
 }
 
-@keyframes tabs-sheen {
+@keyframes gs-tabs-sheen {
     to {
         transform: translateX(120%);
     }
@@ -1292,12 +1276,65 @@ input.form-error:focus {
     background: var(--color-overlay);
     backdrop-filter: blur(6px) saturate(120%);
     -webkit-backdrop-filter: blur(6px) saturate(120%);
-    animation: gs-modal-in var(--duration-slow) var(--ease-out);
+    /* Entrada e saída são transição de CSS, sem JS. O display entra na
+       transição com allow-discrete: ao ganhar hidden, o modal continua
+       visível durante a saída e só então some. @starting-style é o ponto
+       de partida da entrada (o modal nasce transparente e aparece).
+       Navegador que não conhece os dois abre e fecha na hora, sem erro. */
+    opacity: 1;
+    transition: opacity var(--duration-slow) var(--ease-out),
+        display var(--duration-slow) allow-discrete;
 }
 
+/* Com um modal aberto a página de trás não rola: o dedo que arrasta o
+   modal no celular não pode levar a lista junto. */
+body:has(.modal-create:not([hidden]), .modal-edit:not([hidden])) {
+    overflow: hidden;
+}
+
+/* A saída é mais rápida que a entrada: quem fecha já decidiu, não
+   precisa acompanhar. */
 .modal-create[hidden],
 .modal-edit[hidden] {
     display: none;
+    opacity: 0;
+    transition-duration: var(--duration-base);
+    transition-timing-function: ease;
+}
+
+@starting-style {
+
+    .modal-create:not([hidden]),
+    .modal-edit:not([hidden]) {
+        opacity: 0;
+    }
+}
+
+/* O cartão sobe e cresce um pouco ao entrar, com a curva que sai rápido
+   e pousa devagar (parece ter peso, sem quicar), e desce um pouco ao
+   sair. Vale também para o modal de confirmação do app.js. */
+.modal-create-content,
+.modal-edit-content,
+.modal-confirm-content {
+    transition: opacity var(--duration-slow) var(--ease-emphasized),
+        transform var(--duration-slow) var(--ease-emphasized);
+}
+
+.modal-create[hidden] :is(.modal-create-content, .modal-edit-content, .modal-confirm-content),
+.modal-edit[hidden] :is(.modal-create-content, .modal-edit-content, .modal-confirm-content) {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    transition-duration: var(--duration-base);
+    transition-timing-function: ease;
+}
+
+@starting-style {
+
+    .modal-create:not([hidden]) :is(.modal-create-content, .modal-edit-content, .modal-confirm-content),
+    .modal-edit:not([hidden]) :is(.modal-create-content, .modal-edit-content, .modal-confirm-content) {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
 }
 
 /* O modal é um cartão como o de login: tarja com as faixas da marca
@@ -1320,7 +1357,6 @@ input.form-error:focus {
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-highlight), var(--shadow-lg);
-    animation: gs-modal-content-in var(--duration-slow) var(--ease-emphasized);
 }
 
 .modal-create-header {
@@ -1339,21 +1375,6 @@ input.form-error:focus {
     min-height: var(--touch-target);
     min-width: var(--touch-target);
     padding: 0 var(--space-3);
-}
-
-@keyframes gs-modal-in {
-    from {
-        opacity: 0;
-    }
-}
-
-/* O modal sobe e cresce um pouco, com a curva que sai rápido e pousa
-   devagar: parece ter peso, sem quicar. */
-@keyframes gs-modal-content-in {
-    from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.96);
-    }
 }
 
 /* ============================================================
@@ -1382,12 +1403,77 @@ input.form-error:focus {
     }
 }
 
+/* Linha que acabou de mudar (&destaque=ID, ligada pelo app.js): chega
+   em verde, com a barra de destaque à esquerda, e volta ao normal em
+   ~2s. backwards segura o verde durante o atraso, para a linha já nascer
+   acesa. Na tabela que também entra em cascata, as duas animações
+   rodam juntas, cada uma com o seu atraso. */
+.gs-row-highlight {
+    animation: gs-row-highlight 1800ms var(--ease-out) 500ms backwards;
+}
+
+.gs-row.gs-row-highlight {
+    animation: gs-row-enter var(--duration-slow) var(--ease-out) backwards,
+        gs-row-highlight 1800ms var(--ease-out) backwards;
+    animation-delay: calc(120ms + var(--gs-i, 0) * 35ms), 500ms;
+}
+
+@keyframes gs-row-highlight {
+
+    from,
+    30% {
+        background-color: var(--color-success-tint);
+        box-shadow: inset 3px 0 0 var(--color-success);
+    }
+}
+
+/* Com menos movimento pedido a animação vira um fundo fixo: sem ela o
+   destaque nem apareceria. */
+@media (prefers-reduced-motion: reduce) {
+
+    .gs-row-highlight {
+        background-color: var(--color-success-tint);
+        box-shadow: inset 3px 0 0 var(--color-success);
+    }
+}
+
 /* Busca em tempo real: enquanto o servidor responde, a tabela antiga
    esmaece (a pessoa vê que algo está acontecendo sem a tela pular); a
    nova entra com um fade curto. */
 .gs-refreshing {
     opacity: 0.5;
     transition: opacity var(--duration-base) var(--ease-out);
+}
+
+/* Resposta demorada (mais de 400 ms, ver enableLiveSearch): uma faixa de
+   luz atravessa a região esmaecida em laço, até a resposta chegar. Com
+   menos movimento pedido fica só o esmaecido. */
+.gs-refreshing-slow {
+    position: relative;
+    overflow: hidden;
+}
+
+.gs-refreshing-slow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 20%, var(--color-white-10) 50%, transparent 80%);
+    transform: translateX(-100%);
+    animation: gs-loading-sheen 1100ms ease-in-out infinite;
+}
+
+@keyframes gs-loading-sheen {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .gs-refreshing-slow::after {
+        content: none;
+    }
 }
 
 .gs-region-in {
@@ -1408,31 +1494,6 @@ input.form-error:focus {
     from {
         opacity: 0;
         transform: translateY(-6px);
-    }
-}
-
-/* Saída animada dos modais. Mais rápida que a entrada: quem fecha já
-   decidiu, não precisa acompanhar. */
-.modal-closing {
-    animation: gs-modal-fade-out var(--duration-base) ease forwards;
-}
-
-.modal-closing .modal-create-content,
-.modal-closing .modal-edit-content,
-.modal-closing .modal-confirm-content {
-    animation: gs-modal-content-fade-out var(--duration-base) ease forwards;
-}
-
-@keyframes gs-modal-fade-out {
-    to {
-        opacity: 0;
-    }
-}
-
-@keyframes gs-modal-content-fade-out {
-    to {
-        opacity: 0;
-        transform: translateY(10px) scale(0.98);
     }
 }
 
@@ -1475,9 +1536,9 @@ input.form-error:focus {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 16px;
-    height: 16px;
-    margin: -8px 0 0 -8px;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    margin: calc(var(--icon-sm) / -2) 0 0 calc(var(--icon-sm) / -2);
     border: 2px solid var(--color-white-35);
     border-top-color: var(--color-on-brand);
     border-radius: 50%;
@@ -1487,20 +1548,6 @@ input.form-error:focus {
 @keyframes gs-spin {
     to {
         transform: rotate(360deg);
-    }
-}
-
-/* Saída de página para navegador sem View Transitions (ver base.css).
-   Só o conteúdo some: antes era o body inteiro, e a barra lateral — que
-   é igual na tela seguinte — piscava junto. */
-body.gs-leaving .main-content {
-    animation: gs-page-leave var(--duration-base) ease forwards;
-}
-
-@keyframes gs-page-leave {
-    to {
-        opacity: 0;
-        transform: translateY(-6px);
     }
 }
 
@@ -1556,10 +1603,10 @@ body.gs-leaving .main-content {
    de fundo claro. Agora segue o padrão do <mark>: fundo âmbar e
    texto escuro, 8.1:1 de contraste. */
 .gs-highlight {
-    padding: 0 2px;
+    padding: 0 var(--space-half);
     color: var(--color-warning-text);
     background: var(--color-warning-tint);
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     font-weight: var(--weight-semibold);
 }
 
@@ -1567,18 +1614,28 @@ body.gs-leaving .main-content {
    Toasts
    ============================================================ */
 
-/* Logo abaixo da topbar, e não por cima dela: antes o aviso cobria o
-   nome e o cargo de quem está logado. */
+/* No celular o toast ocupa a largura toda, no topo. Do tablet em
+   diante fica à direita, logo abaixo da topbar, e não por cima dela:
+   antes o aviso cobria o nome e o cargo de quem está logado. */
 .gs-toasts {
     position: fixed;
-    top: calc(var(--topbar-height) + var(--space-4));
-    right: var(--space-5);
+    top: var(--space-3);
+    left: var(--space-3);
+    right: var(--space-3);
     z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    max-width: min(380px, calc(100vw - var(--space-6)));
     pointer-events: none;
+}
+
+@media (min-width: 768px) {
+    .gs-toasts {
+        top: calc(var(--topbar-height) + var(--space-4));
+        left: auto;
+        right: var(--space-5);
+        max-width: min(var(--toast-width), calc(100vw - var(--space-6)));
+    }
 }
 
 .gs-toast {
@@ -1655,9 +1712,9 @@ body.gs-leaving .main-content {
 }
 
 .gs-toast-icon svg {
-    width: 18px;
-    height: 18px;
-    margin-top: 1px;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    margin-top: var(--space-px);
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -1675,8 +1732,8 @@ body.gs-leaving .main-content {
 .gs-toast-close {
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    width: var(--icon-xl);
+    height: var(--icon-xl);
     padding: 0;
     color: inherit;
     background: none;
@@ -1691,16 +1748,6 @@ body.gs-leaving .main-content {
 .gs-toast-close:hover {
     opacity: 1;
     background: var(--color-white-10);
-}
-
-/* No celular o toast ocupa a largura toda, no topo. */
-@media (max-width: 767px) {
-    .gs-toasts {
-        top: var(--space-3);
-        left: var(--space-3);
-        right: var(--space-3);
-        max-width: none;
-    }
 }
 
 /* ============================================================
@@ -1732,7 +1779,6 @@ body.gs-leaving .main-content {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-highlight), var(--shadow-lg);
     text-align: center;
-    animation: gs-modal-content-in var(--duration-slow) var(--ease-emphasized);
 }
 
 .modal-confirm-icon {
@@ -1763,8 +1809,8 @@ body.gs-leaving .main-content {
 }
 
 .modal-confirm-icon svg {
-    width: 24px;
-    height: 24px;
+    width: var(--icon-xl);
+    height: var(--icon-xl);
     fill: none;
     stroke: currentColor;
     stroke-width: 2;

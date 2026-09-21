@@ -48,13 +48,13 @@ body.mobile-menu-open .sidebar {
 }
 
 /* Com a gaveta abrindo, os itens do menu chegam um atrás do outro,
-   acompanhando o painel. Só no celular: no tablet em diante a barra é
-   fixa e não "abre". backwards (e não both) de propósito: terminada a
+   acompanhando o painel. Só no celular (ver tokens.css, breakpoints):
+   no tablet em diante a barra é fixa e não "abre". backwards (e não both) de propósito: terminada a
    animação, nada dela fica valendo no item. */
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
 
     body.mobile-menu-open .sidebar nav a {
-        animation: drawer-item-in var(--duration-slow) var(--ease-emphasized) backwards;
+        animation: gs-drawer-item-in var(--duration-slow) var(--ease-emphasized) backwards;
         animation-delay: calc(80ms + var(--nav-i, 8) * 30ms);
     }
 
@@ -68,7 +68,7 @@ body.mobile-menu-open .sidebar {
     .sidebar nav a:nth-child(8) { --nav-i: 7; }
 }
 
-@keyframes drawer-item-in {
+@keyframes gs-drawer-item-in {
     from {
         opacity: 0;
         transform: translateX(-12px);
@@ -112,7 +112,7 @@ body.mobile-menu-open .sidebar {
 }
 
 .logo-text small {
-    margin-top: 2px;
+    margin-top: var(--space-half);
     font-size: var(--text-xs);
     font-weight: var(--weight-normal);
     letter-spacing: normal;
@@ -215,11 +215,11 @@ body.mobile-menu-open .sidebar {
 
     .sidebar nav a:hover::after {
         opacity: 1;
-        animation: nav-sheen 650ms ease both;
+        animation: gs-nav-sheen 650ms ease both;
     }
 }
 
-@keyframes nav-sheen {
+@keyframes gs-nav-sheen {
     to {
         transform: translateX(120%);
     }
@@ -252,11 +252,11 @@ body.mobile-menu-open .sidebar {
 @media (prefers-reduced-motion: no-preference) {
 
     .sidebar nav a.tab-active::before {
-        animation: nav-indicator-in var(--duration-slow) var(--ease-spring) 120ms backwards;
+        animation: gs-nav-indicator-in var(--duration-slow) var(--ease-spring) 120ms backwards;
     }
 }
 
-@keyframes nav-indicator-in {
+@keyframes gs-nav-indicator-in {
     from {
         transform: scaleY(0);
         opacity: 0;
@@ -268,9 +268,9 @@ body.mobile-menu-open .sidebar {
 }
 
 .nav-icon {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: 0 0 var(--icon-md);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;
@@ -388,7 +388,7 @@ body.mobile-menu-open {
 
     .content > :not(.modal-create):not(.modal-edit),
     .access-denied-card {
-        animation: page-block-in var(--duration-slower) var(--ease-emphasized) backwards;
+        animation: gs-page-block-in var(--duration-slower) var(--ease-emphasized) backwards;
         animation-delay: calc(var(--block-i, 6) * var(--stagger-step));
     }
 
@@ -401,7 +401,7 @@ body.mobile-menu-open {
     .access-denied-card { --block-i: 0; }
 }
 
-@keyframes page-block-in {
+@keyframes gs-page-block-in {
     from {
         opacity: 0;
         transform: translateY(14px);
@@ -465,8 +465,8 @@ body.gs-scrolled .topbar {
 }
 
 .mobile-menu-button svg {
-    width: 21px;
-    height: 21px;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -497,8 +497,8 @@ body.gs-scrolled .topbar {
 .user-role {
     display: inline-flex;
     align-items: center;
-    margin-top: 2px;
-    padding: 1px var(--space-2);
+    margin-top: var(--space-half);
+    padding: var(--space-px) var(--space-2);
     font-size: var(--text-xs);
     font-weight: var(--weight-semibold);
     border-radius: var(--radius-full);
@@ -585,6 +585,7 @@ body.gs-scrolled .topbar {
 
 /* ============================================================
    Tabelas no celular: cada linha vira um cartão
+   Só no celular (ver tokens.css, breakpoints).
 
    O app.js (initResponsiveTableLabels) copia o texto de cada <th>
    para data-label do <td> correspondente. Aqui esse rótulo vira o

@@ -75,7 +75,7 @@
 
 .last-handler-when {
     display: block;
-    margin-top: 2px;
+    margin-top: var(--space-half);
     font-size: var(--text-xs);
     color: var(--color-text-muted);
     white-space: nowrap;
@@ -97,7 +97,8 @@
     font-weight: var(--weight-semibold);
 }
 
-/* No celular a linha "e mais N" não vira cartão como as outras. */
+/* Só no celular (ver tokens.css, breakpoints): a linha "e mais N" não
+   vira cartão como as outras. */
 @media (max-width: 767px) {
 
     .low-stock-more {
@@ -132,31 +133,20 @@
     }
 }
 
-.materials-table,
-.stock-table,
-.movement-table,
-.users-table,
-.edit-materials-table {
-    padding: var(--space-2);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-}
-
-/* No celular o contêiner some visualmente: cada linha já é um
-   cartão próprio, então a moldura dupla só rouba espaço. */
-@media (max-width: 767px) {
+/* Moldura das tabelas. No celular ela não existe: cada linha já é um
+   cartão próprio, e a moldura dupla só roubaria espaço. */
+@media (min-width: 768px) {
 
     .materials-table,
     .stock-table,
     .movement-table,
     .users-table,
     .edit-materials-table {
-        padding: 0;
-        background: none;
-        border: none;
-        box-shadow: none;
+        padding: var(--space-2);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
     }
 }
 
@@ -185,6 +175,8 @@
     display: none;
 }
 
+/* Só no celular (ver tokens.css, breakpoints): a célula de ações virou
+   linha do cartão e passa a alinhar os botões em flex. */
 @media (max-width: 767px) {
     .material-actions {
         display: flex;
@@ -346,21 +338,20 @@
 
 /* Entrada/saída: quantidade estreita e observação ao lado dos botões.
    No celular a linha já virou cartão, então os dois ocupam a largura. */
-.stock-table .stock-qty-input {
-    width: 96px;
-    min-width: 0;
-}
-
+.stock-table .stock-qty-input,
 .stock-table .stock-note-input {
-    width: 200px;
+    width: 100%;
     min-width: 0;
 }
 
-@media (max-width: 767px) {
+@media (min-width: 768px) {
 
-    .stock-table .stock-qty-input,
+    .stock-table .stock-qty-input {
+        width: var(--stock-qty-width);
+    }
+
     .stock-table .stock-note-input {
-        width: 100%;
+        width: var(--stock-note-width);
     }
 }
 
@@ -534,8 +525,8 @@
 }
 
 .access-denied-icon svg {
-    width: 28px;
-    height: 28px;
+    width: var(--icon-2xl);
+    height: var(--icon-2xl);
 }
 
 .access-denied-kicker {

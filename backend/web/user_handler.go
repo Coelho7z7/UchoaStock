@@ -120,7 +120,7 @@ func userHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 			} else if err := services.UpdateUserAccessWeb(targetID, newRole, siteID); err != nil {
 				data.Error = err.Error()
 			} else {
-				http.Redirect(w, r, "/usuarios?sucesso=atualizado", http.StatusSeeOther)
+				http.Redirect(w, r, successURL("/usuarios", "atualizado", targetID), http.StatusSeeOther)
 				return
 			}
 
@@ -138,7 +138,7 @@ func userHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 			} else if err := services.ResetUserPasswordWeb(targetID, userID, r.FormValue("senha"), ""); err != nil {
 				data.Error = err.Error()
 			} else {
-				http.Redirect(w, r, "/usuarios?sucesso=senha", http.StatusSeeOther)
+				http.Redirect(w, r, successURL("/usuarios", "senha", targetID), http.StatusSeeOther)
 				return
 			}
 

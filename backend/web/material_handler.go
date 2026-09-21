@@ -235,7 +235,7 @@ func editMaterialHandler(w http.ResponseWriter, r *http.Request, user *models.Us
 			} else if opErr := services.UpdateMaterialWeb(materialID, name, unit, minimum, user.ID); opErr != nil {
 				data.Error = stockErrorMessage(opErr)
 			} else {
-				http.Redirect(w, r, "/alterar-material?sucesso=atualizado", http.StatusSeeOther)
+				http.Redirect(w, r, successURL("/alterar-material", "atualizado", materialID), http.StatusSeeOther)
 				return
 			}
 

@@ -61,7 +61,7 @@
 
                             {{ range .Suppliers }}
 
-                            <tr>
+                            <tr data-row-id="{{ .ID }}">
                                 <td>
                                     <span class="site-name">{{ .Name }}</span>
                                     {{ if not .Active }}<span class="badge supplier-inactive">Desativado</span>{{ end }}
@@ -206,78 +206,3 @@
             </section>
 {{ end }}
 
-{{ define "scripts" }}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // O modal só existe para quem pode cadastrar e editar.
-            const modal = document.getElementById('supplier-modal');
-            if (!modal) return;
-
-            const title = document.getElementById('supplier-modal-title');
-            const action = document.getElementById('supplier-action');
-            const submit = document.getElementById('supplier-submit');
-            const fields = {
-                id: document.getElementById('supplier-id'),
-                name: document.getElementById('supplier-name'),
-                cnpj: document.getElementById('supplier-cnpj'),
-                contact: document.getElementById('supplier-contact'),
-                phone: document.getElementById('supplier-phone'),
-                email: document.getElementById('supplier-email'),
-                city: document.getElementById('supplier-city'),
-                note: document.getElementById('supplier-note')
-            };
-
-            // Preenche o modal e abre. supplier é null no cadastro; na
-            // edição, são os data-* do link "Editar".
-            const openModal = function (supplier) {
-                const editing = supplier !== null;
-
-                // Um erro de envio anterior não deve aparecer no próximo.
-                const oldError = modal.querySelector('.form-error');
-                if (oldError) oldError.remove();
-
-                title.textContent = editing ? 'Editar fornecedor' : 'Novo fornecedor';
-                action.value = editing ? 'atualizar' : 'cadastrar';
-                submit.textContent = editing ? 'Salvar alterações' : 'Cadastrar fornecedor';
-                Object.keys(fields).forEach(function (key) {
-                    fields[key].value = editing ? (supplier[key] || '') : '';
-                });
-
-                modal.hidden = false;
-                fields.name.focus();
-            };
-
-            document.getElementById('open-create-supplier').addEventListener('click', function () {
-                openModal(null);
-            });
-
-            // Com JS o "Editar" abre o modal na hora, sem recarregar a página.
-            // O clique é ouvido no document ("delegação"): a busca em tempo
-            // real troca a tabela, e os links novos não teriam ouvinte próprio.
-            document.addEventListener('click', function (event) {
-                const link = event.target.closest('.suppliers-table a[data-id]');
-                if (!link) return;
-                event.preventDefault();
-                openModal(link.dataset);
-            });
-
-            // Aberto pelo servidor (?editar=ID ou erro): foco no nome.
-            if (!modal.hidden) fields.name.focus();
-
-            const closeModal = function () {
-                modal.hidden = true;
-                // Tira o ?editar da URL, para um F5 não reabrir o modal.
-                if (location.search.indexOf('editar=') !== -1) {
-                    history.replaceState(null, '', location.pathname);
-                }
-            };
-            document.getElementById('close-supplier-modal').addEventListener('click', closeModal);
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) closeModal();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hidden) closeModal();
-            });
-        });
-    </script>
-{{ end }}

@@ -1,5 +1,3 @@
-// Toggle de mostrar/ocultar senha (Login)
-
 // ---------------------------------------------------------------------
 // Navegação mobile: sidebar sanduíche, overlay, ESC e fechamento ao navegar.
 // Também transforma cabeçalhos de tabela em data-labels para a visualização
@@ -56,12 +54,6 @@ function initResponsiveTableLabels() {
     });
 }
 
-// Mantém o ano do rodapé sempre correto.
-//
-// O HTML já vem com o ano escrito para o rodapé ficar completo mesmo
-// sem JS (e para quem lê o código-fonte); esta função só corrige na
-// virada do ano, para ninguém precisar editar o template todo 1º de
-// janeiro.
 // Linhas de item do formulário de nova solicitação (/solicitacoes/nova):
 // acrescentar, remover e mostrar a unidade do material escolhido. Só
 // isso: toda validação (item repetido, quantidade, limite de itens) é
@@ -121,6 +113,12 @@ function enableRequestItemRows() {
     syncButtons();
 }
 
+// Mantém o ano do rodapé sempre correto.
+//
+// O HTML já vem com o ano escrito para o rodapé ficar completo mesmo
+// sem JS (e para quem lê o código-fonte); esta função só corrige na
+// virada do ano, para ninguém precisar editar o template todo 1º de
+// janeiro.
 function initCurrentYear() {
     const ano = String(new Date().getFullYear());
     document.querySelectorAll("[data-current-year]").forEach(function (el) {
@@ -163,50 +161,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Modal de cadastro de material (Materiais). Mais de um botão pode abrir
-    // o mesmo modal (o cabeçalho da lista e o CTA do estado vazio).
-    //
-    // O clique é ouvido no document ("delegação") em vez de em cada botão:
-    // o CTA do estado vazio fica dentro da tabela, que a busca em tempo
-    // real troca por uma nova, e um ouvinte preso ao botão antigo sumiria
-    // junto com ele.
-    const createModal = document.getElementById("create-material-modal");
-    const closeCreateModal = document.getElementById("close-create-material");
-
-    if (createModal && closeCreateModal) {
-        const closeModal = function () {
-            createModal.hidden = true;
-        };
-
-        document.addEventListener("click", function (event) {
-            if (!event.target.closest("#open-create-material, [data-open='create-material-modal']")) return;
-            createModal.hidden = false;
-            createModal.querySelector("input")?.focus();
-        });
-
-        closeCreateModal.addEventListener("click", closeModal);
-
-        createModal.addEventListener("click", function (event) {
-            if (event.target === createModal) {
-                closeModal();
-            }
-        });
-
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape" && !createModal.hidden) {
-                closeModal();
-            }
-        });
-    }
-
     initAnimations();
+    initPageScripts();
 });
 
 // ---------------------------------------------------------------------
 // Animações globais (entrada suave de conteúdo, linhas de tabela em
-// cascata, fechamento animado de modais e destaque de mensagens).
+// cascata e destaque de mensagens). A entrada e a saída dos modais são
+// CSS puro (components.css, "Modais").
 //
-// O CSS destas animações fica em frontend/css/components.css — antes era
+// O CSS destas animações fica em frontend/static/css/components.css — antes era
 // injetado daqui por um <style>, o que deixava ~226 linhas de estilo
 // escondidas dentro do JS, fora do design system. Aqui só se liga e
 // desliga as classes gs-*.
@@ -219,6 +183,7 @@ function initAnimations() {
     enableDeleteConfirmation();
     enableToasts();
     enableSearchHighlightFromUrl();
+    enableRowHighlightFromUrl();
     // Estas duas não são animação, são estado: valem mesmo para quem
     // pediu menos movimento.
     enableTopbarShadow();
@@ -231,11 +196,9 @@ function initAnimations() {
     // A entrada do conteúdo (antes animateContentEntrance) é CSS puro
     // agora, em layout.css: começa na primeira pintura, sem piscar.
     enableClickRipple();
-    enablePageTransition();
     animateRowsCascade();
     animateCards();
     animateCounters();
-    animateModalClosing();
     animateLoginError();
 }
 
@@ -267,14 +230,13 @@ function enableTopbarShadow() {
 }
 
 // Voltar e avançar do navegador podem restaurar a página de um cache em
-// memória (bfcache), exatamente como ela estava ao sair: com o conteúdo
-// sumido (gs-leaving) e o botão girando (gs-loading). Sem isto, voltar
-// para a tela anterior mostrava uma página vazia. "persisted" é true só
-// quando a página veio desse cache.
+// memória (bfcache), exatamente como ela estava ao sair: com o botão de
+// envio girando (gs-loading). Sem isto, voltar para a tela anterior
+// mostrava o botão travado. "persisted" é true só quando a página veio
+// desse cache.
 function enableBackForwardRestore() {
     window.addEventListener("pageshow", function (event) {
         if (!event.persisted) return;
-        document.body.classList.remove("gs-leaving");
         document.querySelectorAll(".gs-loading").forEach(function (button) {
             button.classList.remove("gs-loading");
         });
@@ -503,9 +465,18 @@ function enableLiveSearch() {
             const current = controller;
             form.setAttribute("aria-busy", "true");
             // A tabela atual esmaece enquanto a nova não chega (components.css).
+            // Se a resposta demorar (rede ruim, na obra), um brilho passa por
+            // cima dela, para ficar claro que a busca está andando e não
+            // travou. Resposta rápida não chega a mostrar o brilho.
             document.querySelectorAll("[data-live-region]").forEach(function (region) {
                 region.classList.add("gs-refreshing");
             });
+            const slowTimer = setTimeout(function () {
+                if (current !== controller) return;
+                document.querySelectorAll('[data-live-region="tabela"].gs-refreshing').forEach(function (region) {
+                    region.classList.add("gs-refreshing-slow");
+                });
+            }, 400);
 
             fetch(url, { signal: controller.signal })
                 .then(function (response) { return response.text(); })
@@ -552,12 +523,13 @@ function enableLiveSearch() {
                     window.location.href = url;
                 })
                 .finally(function () {
+                    clearTimeout(slowTimer);
                     // Busca cancelada por outra mais nova: a tela continua
                     // "ocupada" e esmaecida, esperando a resposta da nova.
                     if (current !== controller) return;
                     form.removeAttribute("aria-busy");
                     document.querySelectorAll("[data-live-region].gs-refreshing").forEach(function (region) {
-                        region.classList.remove("gs-refreshing");
+                        region.classList.remove("gs-refreshing", "gs-refreshing-slow");
                     });
                 });
         };
@@ -614,41 +586,6 @@ function animateCards() {
     document.querySelectorAll(".cards .card").forEach(function (card, index) {
         card.style.setProperty("--gs-i", Math.min(index, CASCADE_LIMIT));
         card.classList.add("gs-row");
-    });
-}
-
-// Anima a saída dos modais (fade + leve deslocamento) antes de
-// escondê-los de verdade, sem precisar alterar o código de cada modal.
-function animateModalClosing() {
-    document.querySelectorAll(".modal-create, .modal-edit").forEach(function (modal) {
-        let animating = false;
-        let ignoreNextMutation = false;
-
-        const observer = new MutationObserver(function () {
-            if (ignoreNextMutation) {
-                ignoreNextMutation = false;
-                return;
-            }
-            if (!modal.hidden || animating) return;
-
-            animating = true;
-            ignoreNextMutation = true;
-            modal.hidden = false;
-            modal.classList.add("modal-closing");
-
-            const finish = function (event) {
-                if (event.target !== modal) return;
-                modal.removeEventListener("animationend", finish);
-                modal.classList.remove("modal-closing");
-                animating = false;
-                ignoreNextMutation = true;
-                modal.hidden = true;
-            };
-
-            modal.addEventListener("animationend", finish);
-        });
-
-        observer.observe(modal, { attributes: true, attributeFilter: ["hidden"] });
     });
 }
 
@@ -715,37 +652,6 @@ function animateCounters() {
 
         el.textContent = format(0);
         requestAnimationFrame(step);
-    });
-}
-
-// Faz a página desaparecer suavemente antes de navegar para outra tela
-// (menu lateral, paginação, sair), em vez de trocar de tela de golpe.
-//
-// Navegador com View Transitions entre páginas (CSSViewTransitionRule
-// existe) já faz isso sozinho, pelo @view-transition de base.css — e
-// melhor: a barra lateral fica parada e não há atraso nenhum no clique.
-// Aí este fade manual sobraria, e somaria 160 ms a cada navegação.
-function enablePageTransition() {
-    if (window.CSSViewTransitionRule) return;
-
-    const linkSelectors = ".sidebar nav a, .pagination a, .sidebar-logout, .sidebar-account";
-
-    document.addEventListener("click", function (event) {
-        const link = event.target.closest(linkSelectors);
-        if (!link) return;
-        if (event.defaultPrevented || event.button !== 0) return;
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if (link.target === "_blank") return;
-
-        // Link para a própria página (a aba já ativa) não tem para onde
-        // sair: o fade só faria a tela piscar.
-        if (link.href === window.location.href) return;
-
-        event.preventDefault();
-        document.body.classList.add("gs-leaving");
-        setTimeout(function () {
-            window.location.href = link.href;
-        }, 160);
     });
 }
 
@@ -1030,6 +936,30 @@ function enableSearchHighlightFromUrl() {
     });
 }
 
+// Depois de salvar, o servidor volta para a lista com &destaque=ID (ver
+// successURL, em backend/web/render.go): a linha desse registro acende
+// por um instante, para a pessoa achar o que acabou de mudar sem
+// procurar. Se ela estiver fora da tela, a página rola até ela. O
+// parâmetro sai da URL em seguida, para um F5 não acender de novo.
+function enableRowHighlightFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("destaque");
+    if (!id) return;
+
+    params.delete("destaque");
+    const query = params.toString();
+    history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
+
+    const row = document.querySelector('.content tbody tr[data-row-id="' + CSS.escape(id) + '"]');
+    if (!row) return;
+    row.classList.add("gs-row-highlight");
+
+    const box = row.getBoundingClientRect();
+    if (box.top < 0 || box.bottom > window.innerHeight) {
+        row.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    }
+}
+
 // Dá um pequeno "pulso" em um elemento — usado em contadores do
 // painel sempre que a quantidade de itens muda, como feedback de que algo
 // foi adicionado/removido.
@@ -1042,3 +972,434 @@ function pulse(element) {
 
 window.gsSearch = { highlight: highlightSearch, clear: clearHighlight };
 window.gsPulse = pulse;
+
+// ---------------------------------------------------------------------
+// Scripts de cada tela. Moravam em <script> dentro dos templates; aqui
+// ganham a versão automática do endereço (?v=) e o cache do navegador.
+// Cada função sai na hora se a tela não tiver os elementos dela, então
+// todas rodam em toda página sem efeito colateral.
+// ---------------------------------------------------------------------
+function initPageScripts() {
+    initCreateMaterialModal();
+    initAssetModal();
+    initEditMaterialModal();
+    initStartInventoryModal();
+    initRejectModal();
+    initInventoryCount();
+    initSupplierModal();
+    initSiteModal();
+    initUserModals();
+}
+
+// Liga o fechamento padrão de um modal: o botão de fechar, o clique no
+// fundo escuro e o Esc. param é o parâmetro da URL com que o servidor
+// manda o modal já aberto (?novo=1, ?editar=ID...): ao fechar, ele sai da
+// URL, para um F5 não reabrir o modal. Devolve a função que fecha.
+function bindModalClose(modal, closeButton, param) {
+    const close = function (event) {
+        if (event) event.preventDefault();
+        modal.hidden = true;
+        if (param && new URLSearchParams(window.location.search).has(param)) {
+            history.replaceState(null, "", window.location.pathname);
+        }
+    };
+    if (closeButton) closeButton.addEventListener("click", close);
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) close();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) close();
+    });
+    return close;
+}
+
+// Tira o erro de um envio anterior, para ele não aparecer de novo quando
+// o modal abre para outra coisa.
+function clearModalError(modal) {
+    const oldError = modal.querySelector(".form-error");
+    if (oldError) oldError.remove();
+}
+
+// Materiais: modal de cadastro. Mais de um botão pode abrir o mesmo
+// modal (o cabeçalho da lista e o CTA do estado vazio). O clique é ouvido
+// no document ("delegação"): o CTA fica dentro da tabela, que a busca em
+// tempo real troca por uma nova.
+function initCreateMaterialModal() {
+    const modal = document.getElementById("create-material-modal");
+    if (!modal) return;
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#open-create-material, [data-open='create-material-modal']")) return;
+        modal.hidden = false;
+        modal.querySelector("input")?.focus();
+    });
+    bindModalClose(modal, document.getElementById("close-create-material"));
+}
+
+// Patrimônio: modal de cadastro. Sem JS, o link "Novo bem" abre a mesma
+// tela com ?novo=1, e o servidor já manda o modal aberto.
+function initAssetModal() {
+    const modal = document.getElementById("asset-modal");
+    const opener = document.getElementById("open-create-asset");
+    if (!modal || !opener) return;
+    const number = document.getElementById("asset-number");
+
+    opener.addEventListener("click", function (event) {
+        event.preventDefault();
+        clearModalError(modal);
+        modal.hidden = false;
+        number.focus();
+    });
+    bindModalClose(modal, document.getElementById("close-asset-modal"), "novo");
+    if (!modal.hidden) number.focus();
+}
+
+// Alterar material: o lápis da linha preenche o modal de edição. Só o
+// lápis tem data-id; a lixeira também usa a classe edit-material-button
+// (pelo visual), e um seletor sem o [data-id] abriria o modal vazio.
+function initEditMaterialModal() {
+    const modal = document.getElementById("edit-material-modal");
+    if (!modal) return;
+    const id = document.getElementById("edit-material-id");
+    const name = document.getElementById("edit-material-name");
+    const unit = document.getElementById("edit-material-unit");
+    const minimum = document.getElementById("edit-material-minimum");
+
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest(".edit-material-button[data-id]");
+        if (!button) return;
+        id.value = button.dataset.id;
+        name.value = button.dataset.name;
+        unit.value = button.dataset.unit;
+        minimum.value = button.dataset.minimum;
+        modal.hidden = false;
+        name.focus();
+    });
+    bindModalClose(modal, document.getElementById("close-edit-material"), "editar");
+    // Aberto pelo servidor (?editar=ID): já chega com o foco no nome.
+    if (!modal.hidden) name.focus();
+}
+
+// Inventários: modal de iniciar. Sem JS, o link leva a ?iniciar=1 e o
+// servidor manda o modal aberto.
+function initStartInventoryModal() {
+    const modal = document.getElementById("start-inventory-modal");
+    const opener = document.getElementById("open-start-inventory");
+    if (!modal || !opener) return;
+    const site = document.getElementById("start-inventory-site");
+
+    opener.addEventListener("click", function (event) {
+        event.preventDefault();
+        modal.hidden = false;
+        site.focus();
+    });
+    bindModalClose(modal, document.getElementById("close-start-inventory"), "iniciar");
+    if (!modal.hidden) site.focus();
+}
+
+// Modal de motivo, nas telas de solicitação (Rejeitar) e de inventário
+// (Devolver para contagem). Sem JS, o link abre a mesma tela com
+// ?rejeitar=1, e o servidor já manda o modal aberto.
+function initRejectModal() {
+    const modal = document.getElementById("reject-modal");
+    if (!modal) return;
+    const reason = document.getElementById("reject-reason");
+
+    const opener = document.querySelector("[data-open-reject]");
+    if (opener) {
+        opener.addEventListener("click", function (event) {
+            event.preventDefault();
+            modal.hidden = false;
+            reason.focus();
+        });
+    }
+    bindModalClose(modal, document.getElementById("close-reject-modal"), "rejeitar");
+    if (!modal.hidden) reason.focus();
+}
+
+// Contagem do inventário: a diferença é calculada enquanto se digita (o
+// servidor recalcula tudo ao salvar; isto é só para a pessoa ver na
+// hora), e só o Enviar pede confirmação.
+function initInventoryCount() {
+    const parseQuantity = function (text) {
+        text = text.trim();
+        if (text === "") return null;
+        // Mesma regra do servidor: com vírgula, o ponto é milhar.
+        if (text.indexOf(",") !== -1) text = text.replace(/\./g, "").replace(",", ".");
+        if (!/^-?\d*\.?\d+$/.test(text)) return NaN;
+        return parseFloat(text);
+    };
+    const formatDifference = function (value) {
+        const rounded = Math.round(value * 1000) / 1000;
+        const text = Math.abs(rounded).toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+        if (rounded > 0) return "+" + text;
+        if (rounded < 0) return "-" + text;
+        return "0";
+    };
+    document.querySelectorAll("[data-count-input]").forEach(function (input) {
+        input.addEventListener("input", function () {
+            const row = input.closest("[data-inventory-row]");
+            const diff = row.querySelector("[data-diff]");
+            const counted = parseQuantity(input.value);
+            diff.classList.remove("inventory-diff-up", "inventory-diff-down");
+            if (counted === null || isNaN(counted)) {
+                diff.textContent = "—";
+                return;
+            }
+            const difference = counted - parseFloat(row.dataset.expected);
+            diff.textContent = formatDifference(difference);
+            if (Math.round(difference * 1000) > 0) diff.classList.add("inventory-diff-up");
+            if (Math.round(difference * 1000) < 0) diff.classList.add("inventory-diff-down");
+        });
+    });
+
+    // Salvar e Enviar dividem o mesmo formulário. O data-confirm é
+    // colocado no clique do Enviar e tirado no do Salvar (o modal de
+    // confirmação aparece quando o formulário tem um botão com ele).
+    const action = document.getElementById("count-action");
+    const save = document.getElementById("save-count");
+    const send = document.getElementById("send-count");
+    if (!action || !save || !send) return;
+    save.addEventListener("click", function () {
+        action.value = "salvar";
+        delete send.dataset.confirm;
+    });
+    send.addEventListener("click", function () {
+        action.value = "enviar";
+        send.dataset.confirm = "Enviar a contagem para aprovação? Depois do envio ela não pode mais ser alterada, a não ser que seja devolvida para contagem.";
+        send.dataset.confirmTitle = "Enviar para aprovação";
+        send.dataset.confirmOk = "Enviar";
+        send.dataset.confirmTone = "warning";
+    });
+}
+
+// Fornecedores: o mesmo modal cadastra e edita. Só existe para quem pode
+// cadastrar e editar.
+function initSupplierModal() {
+    const modal = document.getElementById("supplier-modal");
+    if (!modal) return;
+
+    const title = document.getElementById("supplier-modal-title");
+    const action = document.getElementById("supplier-action");
+    const submit = document.getElementById("supplier-submit");
+    const fields = {
+        id: document.getElementById("supplier-id"),
+        name: document.getElementById("supplier-name"),
+        cnpj: document.getElementById("supplier-cnpj"),
+        contact: document.getElementById("supplier-contact"),
+        phone: document.getElementById("supplier-phone"),
+        email: document.getElementById("supplier-email"),
+        city: document.getElementById("supplier-city"),
+        note: document.getElementById("supplier-note")
+    };
+
+    // supplier é null no cadastro; na edição, são os data-* do "Editar".
+    const openModal = function (supplier) {
+        const editing = supplier !== null;
+        clearModalError(modal);
+        title.textContent = editing ? "Editar fornecedor" : "Novo fornecedor";
+        action.value = editing ? "atualizar" : "cadastrar";
+        submit.textContent = editing ? "Salvar alterações" : "Cadastrar fornecedor";
+        Object.keys(fields).forEach(function (key) {
+            fields[key].value = editing ? (supplier[key] || "") : "";
+        });
+        modal.hidden = false;
+        fields.name.focus();
+    };
+
+    document.getElementById("open-create-supplier").addEventListener("click", function () {
+        openModal(null);
+    });
+
+    // Com JS o "Editar" abre o modal na hora, sem recarregar a página.
+    // Delegação no document: a busca em tempo real troca a tabela.
+    document.addEventListener("click", function (event) {
+        const link = event.target.closest(".suppliers-table a[data-id]");
+        if (!link) return;
+        event.preventDefault();
+        openModal(link.dataset);
+    });
+
+    bindModalClose(modal, document.getElementById("close-supplier-modal"), "editar");
+    // Aberto pelo servidor (?editar=ID ou erro): foco no nome.
+    if (!modal.hidden) fields.name.focus();
+}
+
+// Obras: o mesmo modal cadastra e edita, e a mudança de situação pede
+// confirmação.
+function initSiteModal() {
+    const modal = document.getElementById("site-modal");
+    if (!modal) return;
+    const title = document.getElementById("site-modal-title");
+    const action = document.getElementById("site-action");
+    const id = document.getElementById("site-id");
+    const name = document.getElementById("site-name");
+    const city = document.getElementById("site-city");
+    const manager = document.getElementById("site-manager");
+    const statusField = document.getElementById("site-status-field");
+    const status = document.getElementById("site-status");
+    const help = document.getElementById("site-help");
+    const submit = document.getElementById("site-submit");
+
+    // Obra concluída só volta para "Em andamento" (reabrir) com a
+    // permissão de reabrir. Sem ela, a opção some do seletor. O disabled
+    // garante que ela também não seja escolhida nos navegadores que
+    // ignoram hidden em <option>.
+    const syncReopenOption = function (originalStatus) {
+        const reopen = status.querySelector('option[value="ANDAMENTO"]');
+        const blocked = originalStatus === "CONCLUIDA" && modal.dataset.canReopen !== "sim";
+        reopen.hidden = blocked;
+        reopen.disabled = blocked;
+    };
+
+    // Paralisar, concluir ou retomar pede confirmação antes de salvar. O
+    // modal de confirmação aparece quando o botão tem data-confirm, então
+    // o atributo só é colocado quando a situação escolhida muda.
+    const confirmations = {
+        ANDAMENTO: { title: "Retomar obra", ok: "Retomar", text: "Retomar a obra \"{nome}\"? Ela volta a ficar em andamento e aceita entrada e saída de material." },
+        PARALISADA: { title: "Paralisar obra", ok: "Paralisar", text: "Confirma a paralisação da obra \"{nome}\"?" },
+        CONCLUIDA: { title: "Concluir obra", ok: "Concluir obra", text: "Confirma a conclusão da obra \"{nome}\"? Ela passa a ser só consulta: não aceita mais entrada nem saída de material." }
+    };
+    const updateConfirmation = function () {
+        const chosen = confirmations[status.value];
+        const changed = action.value === "atualizar" && status.value !== status.dataset.original;
+        if (chosen && changed && !statusField.hidden) {
+            submit.dataset.confirm = chosen.text.replace("{nome}", name.value.trim());
+            submit.dataset.confirmTitle = chosen.title;
+            submit.dataset.confirmOk = chosen.ok;
+            submit.dataset.confirmTone = "warning";
+        } else {
+            delete submit.dataset.confirm;
+            delete submit.dataset.confirmTitle;
+            delete submit.dataset.confirmOk;
+            delete submit.dataset.confirmTone;
+        }
+    };
+
+    // site é null no cadastro; na edição, são os data-* do "Editar".
+    const openModal = function (site) {
+        const editing = site !== null;
+        const central = editing && site.central === "sim";
+        clearModalError(modal);
+
+        title.textContent = editing ? "Editar obra" : "Nova obra";
+        action.value = editing ? "atualizar" : "cadastrar";
+        submit.textContent = editing ? "Salvar alterações" : "Cadastrar obra";
+        id.value = editing ? site.id : "";
+        name.value = editing ? site.name : "";
+        city.value = editing ? site.city : "";
+        manager.value = editing ? site.manager : "";
+        status.value = editing ? site.status : "ANDAMENTO";
+        status.dataset.original = editing ? site.status : "";
+        syncReopenOption(status.dataset.original);
+        // Só quem gerencia obras muda a situação; para os outros o campo
+        // some (e o servidor recusa a edição).
+        statusField.hidden = !editing || central || modal.dataset.canChangeStatus !== "sim";
+        help.textContent = central
+            ? "O almoxarifado central fica sempre em andamento: é dele que o material sai para as obras."
+            : editing
+                ? "Obra concluída continua na lista e no histórico."
+                : "A obra nasce em andamento. A situação pode ser mudada depois, na edição.";
+
+        updateConfirmation();
+        modal.hidden = false;
+        name.focus();
+    };
+
+    status.addEventListener("change", updateConfirmation);
+    name.addEventListener("input", updateConfirmation);
+
+    // O botão só existe para quem pode cadastrar obra.
+    const openCreate = document.getElementById("open-create-site");
+    if (openCreate) {
+        openCreate.addEventListener("click", function () {
+            openModal(null);
+        });
+    }
+
+    // Com JS o "Editar" abre o modal na hora, sem recarregar a página.
+    // Delegação no document: a busca em tempo real troca a tabela.
+    document.addEventListener("click", function (event) {
+        const link = event.target.closest(".sites-table a[data-id]");
+        if (!link) return;
+        event.preventDefault();
+        openModal(link.dataset);
+    });
+
+    bindModalClose(modal, document.getElementById("close-site-modal"), "editar");
+    // Aberto pelo servidor (?editar=ID ou erro): foco no nome.
+    if (!modal.hidden) {
+        syncReopenOption(status.dataset.original);
+        updateConfirmation();
+        name.focus();
+    }
+}
+
+// Usuários: modais de cadastro, de permissão e de senha. Os botões das
+// linhas são ouvidos no document ("delegação"): a busca em tempo real
+// troca a tabela, e um ouvinte preso a um botão antigo sumiria junto.
+function initUserModals() {
+    const createModal = document.getElementById("create-user-modal");
+    const editModal = document.getElementById("edit-user-modal");
+    const passwordModal = document.getElementById("password-user-modal");
+    if (!createModal || !editModal || !passwordModal) return;
+
+    const openModal = function (modal, focusElement) {
+        modal.hidden = false;
+        if (focusElement) focusElement.focus();
+    };
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#open-create-user, [data-open=\"create-user-modal\"]")) return;
+        openModal(createModal, createModal.querySelector("input"));
+    });
+    bindModalClose(createModal, document.getElementById("close-create-user"));
+
+    // Administrador não tem obra: o campo some quando a permissão
+    // escolhida é Administrador (o servidor também ignora a obra).
+    document.querySelectorAll("select[name=\"role\"]").forEach(function (roleSelect) {
+        const field = roleSelect.form.querySelector("[data-site-field]");
+        if (!field) return;
+        const sync = function () {
+            field.hidden = roleSelect.value === "admin";
+        };
+        roleSelect.addEventListener("change", sync);
+        sync();
+    });
+
+    const idField = document.getElementById("edit-user-id");
+    const nameDisplayField = document.getElementById("edit-user-name-display");
+    const roleField = document.getElementById("edit-user-role");
+    const siteField = document.getElementById("edit-user-site");
+
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest(".edit-material-button[data-id]");
+        if (!button) return;
+        idField.value = button.dataset.id;
+        nameDisplayField.value = button.dataset.name;
+        roleField.value = button.dataset.role;
+        siteField.value = button.dataset.site || "0";
+        // "change" atualiza o botão da lista com busca e mostra ou esconde
+        // o campo Obra conforme a permissão.
+        siteField.dispatchEvent(new Event("change"));
+        roleField.dispatchEvent(new Event("change"));
+        openModal(editModal, roleField);
+    });
+    bindModalClose(editModal, document.getElementById("close-edit-user"));
+
+    // O botão de senha usa data-password-id, e não data-id, para não ser
+    // capturado pelo seletor do modal de permissão acima.
+    const passwordIdField = document.getElementById("password-user-id");
+    const passwordNameField = document.getElementById("password-user-name-display");
+    const passwordValueField = document.getElementById("password-user-value");
+
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest(".edit-material-button[data-password-id]");
+        if (!button) return;
+        passwordIdField.value = button.dataset.passwordId;
+        passwordNameField.value = button.dataset.passwordName;
+        passwordValueField.value = "";
+        openModal(passwordModal, passwordValueField);
+    });
+    bindModalClose(passwordModal, document.getElementById("close-password-user"));
+}

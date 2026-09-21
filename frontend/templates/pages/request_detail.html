@@ -163,39 +163,3 @@
             </section>
 {{ end }}
 
-{{ define "scripts" }}
-    <script>
-        // Modal de rejeição. Sem JS, o link "Rejeitar" abre a mesma tela com
-        // ?rejeitar=1, e o servidor já manda o modal aberto.
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('reject-modal');
-            if (!modal) return;
-            const reason = document.getElementById('reject-reason');
-
-            const closeModal = function (event) {
-                if (event) event.preventDefault();
-                modal.hidden = true;
-                if (location.search.indexOf('rejeitar=') !== -1) {
-                    history.replaceState(null, '', location.pathname);
-                }
-            };
-
-            const open = document.querySelector('[data-open-reject]');
-            if (open) {
-                open.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    modal.hidden = false;
-                    reason.focus();
-                });
-            }
-            document.getElementById('close-reject-modal').addEventListener('click', closeModal);
-            modal.addEventListener('click', function (event) {
-                if (event.target === modal) closeModal();
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && !modal.hidden) closeModal();
-            });
-            if (!modal.hidden) reason.focus();
-        });
-    </script>
-{{ end }}

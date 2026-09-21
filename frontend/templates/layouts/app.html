@@ -9,7 +9,10 @@
          heading     título da topbar (sem ele, repete o title)
          body-class  classe do <body>, para o CSS específico da tela
          content     o conteúdo da tela, abaixo da topbar
-         scripts     <script> da tela, depois do app.js
+
+     JavaScript não entra na página: vai para o app.js, numa função que
+     sai na hora quando a tela não tem os elementos dela (ver
+     initPageScripts).
 
      Dentro dos blocos, "." são os dados da tela (os mesmos que o handler
      passou), como antes. */}}
@@ -41,7 +44,6 @@
     </div>
 
     <script src="{{ asset "js/app.js" }}"></script>
-{{ block "scripts" .Page }}{{ end }}
 </body>
 
 </html>

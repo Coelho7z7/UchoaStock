@@ -104,7 +104,7 @@ func stockHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
 		if opErr != nil {
 			data.Error = stockErrorMessage(opErr)
 		} else if data.Error == "" {
-			redirectToStock(w, r, action, data.Search, page)
+			redirectToStock(w, r, action, materialID, data.Search, page)
 			return
 		}
 	} else if r.Method != http.MethodGet {
@@ -164,10 +164,11 @@ func stockErrorMessage(err error) string {
 }
 
 // redirectToStock volta para a tela de estoque depois de uma
-// movimentação, mantendo a busca e a página. url.Values monta a query
+// movimentação, mantendo a busca e a página, e com destaque na linha do
+// material movimentado (o app.js acende a linha). url.Values monta a query
 // string já com os caracteres especiais escapados ("m³", espaços...).
-func redirectToStock(w http.ResponseWriter, r *http.Request, action string, search string, page int) {
-	query := url.Values{"sucesso": {action}}
+func redirectToStock(w http.ResponseWriter, r *http.Request, action string, materialID int, search string, page int) {
+	query := url.Values{"sucesso": {action}, "destaque": {strconv.Itoa(materialID)}}
 	if search != "" {
 		query.Set("busca", search)
 	}

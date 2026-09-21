@@ -114,7 +114,8 @@ func supplierHandler(w http.ResponseWriter, r *http.Request, user *models.User) 
 		}
 
 		if err == nil {
-			http.Redirect(w, r, "/fornecedores?sucesso="+success, http.StatusSeeOther)
+			// form.ID é 0 no cadastro: aí não há linha para destacar.
+			http.Redirect(w, r, successURL("/fornecedores", success, form.ID), http.StatusSeeOther)
 			return
 		}
 
