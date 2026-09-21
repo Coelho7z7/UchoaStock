@@ -1,0 +1,165 @@
+{{ template "app" (layout . "solicitacoes") }}
+
+{{ define "title" }}Solicitação{{ end }}
+{{ define "body-class" }}requests-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">Solicitação · {{ .Request.SiteName }}</span>
+                        <h3>Solicitação #{{ .Request.ID }}</h3>
+                        <p>{{ if .Request.Note }}{{ .Request.Note }}{{ else }}Sem observação.{{ end }}</p>
+                        <span class="page-hero-meta"><span class="badge request-status-{{ .Request.Status }}">{{ .Request.FormattedStatus }}</span> Criada por {{ .Request.RequesterName }} em {{ .Request.CreatedAt }}</span>
+                    </div>
+                </header>
+
+                {{ if .Message }}
+                <p class="form-success" role="status">{{ .Message }}</p>
+                {{ end }}
+
+                {{ if and .Error (not .RejectOpen) }}
+                <p class="form-error" role="alert">{{ .Error }}</p>
+                {{ end }}
+
+                {{ with .Buttons.SiteBlocked }}
+                <p class="scope-notice">{{ . }}</p>
+                {{ end }}
+
+                <dl class="request-info">
+                    <div><dt>Obra</dt><dd>{{ .Request.SiteName }}</dd></div>
+                    <div><dt>Solicitante</dt><dd>{{ .Request.RequesterName }}</dd></div>
+                    <div><dt>Criada em</dt><dd>{{ .Request.CreatedAt }}</dd></div>
+                    <div><dt>Situação</dt><dd><span class="badge request-status-{{ .Request.Status }}">{{ .Request.FormattedStatus }}</span></dd></div>
+                    <div><dt>Última mudança</dt><dd>{{ .Request.UpdatedAt }}</dd></div>
+                    {{ if .Request.ApprovedByName }}<div><dt>Aprovada por</dt><dd>{{ .Request.ApprovedByName }} em {{ .Request.ApprovedAt }}</dd></div>{{ end }}
+                    {{ if .Request.RejectionReason }}<div class="request-info-wide"><dt>Motivo da rejeição</dt><dd>{{ .Request.RejectionReason }}</dd></div>{{ end }}
+                </dl>
+
+                {{ if or .Buttons.Approve .Buttons.Reject .Buttons.Cancel }}
+                <div class="request-actions">
+                    {{ if .Buttons.Approve }}
+                    <form method="POST" action="/solicitacoes/{{ .Request.ID }}">
+                        <input type="hidden" name="acao" value="aprovar">
+                        <button class="save-button" type="submit"
+                            data-confirm="Aprovar a solicitação #{{ .Request.ID }}? A aprovação não reserva estoque: o saldo é conferido na hora do atendimento."
+                            data-confirm-title="Aprovar solicitação" data-confirm-ok="Aprovar" data-confirm-tone="warning">Aprovar</button>
+                    </form>
+                    {{ end }}
+                    {{ if .Buttons.Reject }}
+                    <a class="button-secondary" href="/solicitacoes/{{ .Request.ID }}?rejeitar=1" data-open-reject>Rejeitar</a>
+                    {{ end }}
+                    {{ if .Buttons.Cancel }}
+                    <form method="POST" action="/solicitacoes/{{ .Request.ID }}">
+                        <input type="hidden" name="acao" value="cancelar">
+                        <button class="button-danger" type="submit"
+                            data-confirm="Cancelar a solicitação #{{ .Request.ID }}?{{ if eq .Request.Status "PARCIAL" }} O que já foi entregue continua entregue.{{ end }}"
+                            data-confirm-title="Cancelar solicitação" data-confirm-ok="Cancelar solicitação" data-confirm-tone="warning">Cancelar solicitação</button>
+                    </form>
+                    {{ end }}
+                </div>
+                {{ end }}
+
+                <div class="materials-section request-items-section">
+
+                    <div class="section-header">
+                        <div>
+                            <h3>Itens</h3>
+                            <small>{{ if .Buttons.Serve }}Informe quanto está entregando agora. O campo já vem com o que falta, limitado pelo saldo da obra; 0 deixa o item para depois.{{ else }}Saldo atual de cada material na obra da solicitação.{{ end }}</small>
+                        </div>
+                    </div>
+
+                    <div class="page-table request-items-table">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Solicitado</th>
+                                    <th>Atendido</th>
+                                    <th>Falta</th>
+                                    <th>Saldo na obra</th>
+                                    {{ if .Buttons.Serve }}<th>Entregar agora</th>{{ end }}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {{ range .Request.Items }}
+                                <tr>
+                                    <td class="activity-material">{{ .MaterialName }}{{ if not .MaterialActive }}<span class="badge request-item-removed">Removido do catálogo</span>{{ end }}</td>
+                                    <td>{{ .FormattedRequested }}<span class="unit-label">{{ .Unit }}</span></td>
+                                    <td>{{ .FormattedFulfilled }}<span class="unit-label">{{ .Unit }}</span></td>
+                                    <td>{{ if .Complete }}<span class="request-item-done">Completo</span>{{ else }}{{ .FormattedMissing }}<span class="unit-label">{{ .Unit }}</span>{{ end }}</td>
+                                    <td><span class="request-balance{{ if .LowBalance }} request-balance-low{{ end }}"{{ if .LowBalance }} title="O saldo da obra não cobre o que falta"{{ end }}>{{ .FormattedBalance }}</span><span class="unit-label">{{ .Unit }}</span>{{ if .LowBalance }}<span class="request-balance-note">menor que o pedido</span>{{ end }}</td>
+                                    {{ if $.Buttons.Serve }}
+                                    <td>{{ if and .MaterialActive (not .Complete) }}<input class="stock-qty-input" type="text" inputmode="decimal" name="entrega_{{ .ID }}" value="{{ with index $.Deliveries .ID }}{{ . }}{{ else }}{{ .SuggestedDelivery }}{{ end }}" aria-label="Entregar agora: {{ .MaterialName }} ({{ .Unit }})" form="serve-form">{{ else }}<span class="muted-dash">—</span>{{ end }}</td>
+                                    {{ end }}
+                                </tr>
+                                {{ end }}
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {{ if .Buttons.Serve }}
+                    <form id="serve-form" class="request-serve-actions" method="POST" action="/solicitacoes/{{ .Request.ID }}">
+                        <input type="hidden" name="acao" value="atender">
+                        <button class="save-button" type="submit"
+                            data-confirm="Registrar a entrega informada? Cada item entregue vira uma saída de estoque da obra {{ .Request.SiteName }}."
+                            data-confirm-title="Atender solicitação" data-confirm-ok="Registrar entrega" data-confirm-tone="warning">Registrar atendimento</button>
+                    </form>
+                    {{ end }}
+
+                </div>
+
+                <div class="materials-section request-history-section">
+
+                    <div class="section-header">
+                        <h3>Histórico</h3>
+                    </div>
+
+                    <ol class="request-history">
+                        {{ range .Request.Events }}
+                        <li class="request-event request-event-{{ .Action }}">
+                            <span class="request-event-when">{{ .CreatedAt }}</span>
+                            <span><strong>{{ .UserName }}</strong> · {{ .FormattedAction }}</span>
+                            {{ if .Detail }}<span class="request-event-detail">{{ .Detail }}</span>{{ end }}
+                        </li>
+                        {{ end }}
+                    </ol>
+
+                </div>
+
+                {{ if .Buttons.Reject }}
+                <div class="modal-edit" id="reject-modal" {{ if not .RejectOpen }}hidden{{ end }}>
+                    <div class="modal-edit-content" role="dialog" aria-modal="true" aria-labelledby="reject-title">
+                        <div class="modal-create-header">
+                            <div>
+                                <span class="edit-kicker">Solicitação #{{ .Request.ID }}</span>
+                                <h3 id="reject-title">Rejeitar solicitação</h3>
+                            </div>
+                            <a class="close-modal-button" href="/solicitacoes/{{ .Request.ID }}" id="close-reject-modal" aria-label="Fechar">&times;</a>
+                        </div>
+
+                        {{ if and .Error .RejectOpen }}
+                        <p class="form-error" role="alert">{{ .Error }}</p>
+                        {{ end }}
+
+                        <form class="create-form" method="POST" action="/solicitacoes/{{ .Request.ID }}">
+                            <input type="hidden" name="acao" value="rejeitar">
+                            <label for="reject-reason">Motivo</label>
+                            <textarea id="reject-reason" name="motivo" maxlength="300" rows="3" placeholder="Ex.: o material já foi enviado em outra solicitação">{{ .RejectReason }}</textarea>
+                            <button class="button-danger" type="submit"
+                                data-confirm="Rejeitar a solicitação #{{ .Request.ID }}? Quem pediu vai ver o motivo."
+                                data-confirm-title="Rejeitar solicitação" data-confirm-ok="Rejeitar" data-confirm-tone="warning">Rejeitar solicitação</button>
+                        </form>
+                    </div>
+                </div>
+                {{ end }}
+
+            </section>
+{{ end }}
+

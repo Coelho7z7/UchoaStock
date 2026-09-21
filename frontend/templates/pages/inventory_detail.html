@@ -1,0 +1,184 @@
+{{ template "app" (layout . "inventarios") }}
+
+{{ define "title" }}{{ .Inventory.Code }}{{ end }}
+{{ define "heading" }}Inventários{{ end }}
+{{ define "body-class" }}inventory-detail-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                {{ $inv := .Inventory }}
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">Inventário · {{ $inv.SiteName }}</span>
+                        <h3>{{ $inv.Code }}</h3>
+                        <p>Compare a contagem física com o saldo registrado.</p>
+                        <span class="page-hero-meta"><span class="badge inventory-status-{{ $inv.Status }}">{{ $inv.FormattedStatus }}</span> Aberto por {{ $inv.OpenedByName }} em {{ $inv.OpenedAt }}</span>
+                        <div class="page-hero-actions">
+                            <a class="button-secondary" href="/inventarios/{{ $inv.ID }}/exportar">↓ Exportar CSV</a>
+                            <a class="button-secondary" href="/inventarios">Voltar para a lista</a>
+                        </div>
+                    </div>
+                </header>
+
+                {{ if .Message }}
+                <p class="form-success" role="status">{{ .Message }}</p>
+                {{ end }}
+
+                {{ if and .Error (not .RejectOpen) }}
+                <p class="form-error" role="alert">{{ .Error }}</p>
+                {{ end }}
+
+                {{ if eq $inv.Status "EM_CONTAGEM" }}
+                <p class="scope-notice">A obra {{ $inv.SiteName }} está com entradas e saídas bloqueadas até este inventário ser aprovado ou cancelado.{{ if $inv.RejectionReason }} Devolvido para contagem por {{ $inv.DecidedByName }} em {{ $inv.DecidedAt }}: “{{ $inv.RejectionReason }}”.{{ end }}</p>
+                {{ else if eq $inv.Status "AGUARDANDO_APROVACAO" }}
+                <p class="scope-notice">Contagem enviada por {{ $inv.SentByName }} em {{ $inv.SentAt }}. A obra continua bloqueada até a aprovação do ajuste.{{ if .Buttons.Participated }} Você participou desta contagem: outra pessoa com permissão de aprovar decide o ajuste.{{ end }}</p>
+                {{ else if eq $inv.Status "APROVADO" }}
+                <p class="scope-notice">Ajuste aprovado por {{ $inv.DecidedByName }} em {{ $inv.DecidedAt }}. {{ if $inv.DifferenceCount }}{{ $inv.DifferenceCount }} diferença(s) viraram movimentações de ajuste.{{ else }}Não houve diferença: nenhum saldo mudou.{{ end }}</p>
+                {{ else if eq $inv.Status "CANCELADO" }}
+                <p class="scope-notice">Cancelado por {{ $inv.DecidedByName }} em {{ $inv.DecidedAt }}, sem ajuste de saldo.</p>
+                {{ end }}
+
+                <dl class="request-info">
+                    <div><dt>Obra</dt><dd>{{ $inv.SiteName }}</dd></div>
+                    <div><dt>Aberto por</dt><dd>{{ $inv.OpenedByName }} em {{ $inv.OpenedAt }}</dd></div>
+                    <div><dt>Situação</dt><dd><span class="badge inventory-status-{{ $inv.Status }}">{{ $inv.FormattedStatus }}</span></dd></div>
+                    <div><dt>Contados</dt><dd>{{ $inv.CountedCount }} de {{ $inv.ItemCount }}{{ if $inv.DifferenceCount }} · {{ $inv.DifferenceCount }} com diferença{{ end }}</dd></div>
+                    {{ if $inv.SentByName }}<div><dt>Enviado por</dt><dd>{{ $inv.SentByName }} em {{ $inv.SentAt }}</dd></div>{{ end }}
+                    {{ if and $inv.DecidedByName (ne $inv.Status "EM_CONTAGEM") }}<div><dt>{{ if eq $inv.Status "APROVADO" }}Aprovado por{{ else if eq $inv.Status "CANCELADO" }}Cancelado por{{ else }}Última decisão{{ end }}</dt><dd>{{ $inv.DecidedByName }} em {{ $inv.DecidedAt }}</dd></div>{{ end }}
+                </dl>
+
+                {{ if or .Buttons.Approve .Buttons.Reject .Buttons.Cancel }}
+                <div class="request-actions">
+                    {{ if .Buttons.Approve }}
+                    <form method="POST" action="/inventarios/{{ $inv.ID }}">
+                        <input type="hidden" name="acao" value="aprovar">
+                        <button class="save-button" type="submit"
+                            data-confirm="Aprovar o ajuste de {{ $inv.Code }}? {{ if $inv.DifferenceCount }}{{ $inv.DifferenceCount }} diferença(s) viram movimentações de ajuste e o saldo passa a ser o contado.{{ else }}Não há diferença: nenhum saldo muda.{{ end }} A obra volta a aceitar entrada e saída."
+                            data-confirm-title="Aprovar ajuste" data-confirm-ok="Aprovar ajuste" data-confirm-tone="warning">Aprovar ajuste</button>
+                    </form>
+                    {{ end }}
+                    {{ if .Buttons.Reject }}
+                    <a class="button-secondary" href="/inventarios/{{ $inv.ID }}?rejeitar=1" data-open-reject>Devolver para contagem</a>
+                    {{ end }}
+                    {{ if .Buttons.Cancel }}
+                    <form method="POST" action="/inventarios/{{ $inv.ID }}">
+                        <input type="hidden" name="acao" value="cancelar">
+                        <button class="button-danger" type="submit"
+                            data-confirm="Cancelar {{ $inv.Code }}? Nenhum saldo é ajustado, a contagem fica só no histórico e a obra volta a aceitar entrada e saída."
+                            data-confirm-title="Cancelar inventário" data-confirm-ok="Cancelar inventário" data-confirm-tone="warning">Cancelar inventário</button>
+                    </form>
+                    {{ end }}
+                </div>
+                {{ end }}
+
+                <div class="materials-section inventory-items-section">
+
+                    <div class="section-header">
+                        <div>
+                            <h3>Contagem de materiais</h3>
+                            <small>{{ if .Buttons.Count }}Informe quanto há fisicamente de cada material. Campo vazio fica para depois; toda diferença precisa de justificativa antes do envio.{{ else }}O saldo esperado ficou congelado no início da contagem.{{ end }}</small>
+                        </div>
+                    </div>
+
+                    <div class="page-table inventory-count-table">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Saldo esperado</th>
+                                    <th>Contado</th>
+                                    <th>Diferença</th>
+                                    <th>Justificativa</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {{ range $inv.Items }}
+                                <tr data-inventory-row data-expected="{{ .Expected }}">
+                                    <td class="activity-material">{{ .MaterialName }}</td>
+                                    <td>{{ .FormattedExpected }}<span class="unit-label">{{ .Unit }}</span></td>
+                                    {{ if $.Buttons.Count }}
+                                    <td><input class="inventory-qty-input" type="text" inputmode="decimal" name="contado_{{ .ID }}" form="count-form" value="{{ if $.Typed }}{{ index $.Inputs .ID }}{{ else }}{{ .CountedInput }}{{ end }}" placeholder="—" aria-label="Contado: {{ .MaterialName }} ({{ .Unit }})" data-count-input><span class="unit-label">{{ .Unit }}</span></td>
+                                    {{ else }}
+                                    <td>{{ if .IsCounted }}{{ .FormattedCounted }}<span class="unit-label">{{ .Unit }}</span>{{ else }}<span class="muted-dash">—</span>{{ end }}</td>
+                                    {{ end }}
+                                    <td><span class="inventory-diff{{ if .HasDifference }}{{ if gt .Difference 0.0 }} inventory-diff-up{{ else }} inventory-diff-down{{ end }}{{ end }}" data-diff>{{ if .IsCounted }}{{ .FormattedDifference }}{{ else }}—{{ end }}</span></td>
+                                    {{ if $.Buttons.Count }}
+                                    <td><input class="inventory-note-input" type="text" name="justificativa_{{ .ID }}" form="count-form" maxlength="200" value="{{ if $.Typed }}{{ index $.Notes .ID }}{{ else }}{{ .Justification }}{{ end }}" placeholder="Obrigatória se houver diferença" aria-label="Justificativa: {{ .MaterialName }}"></td>
+                                    {{ else }}
+                                    <td>{{ if .Justification }}{{ .Justification }}{{ else }}<span class="muted-dash">—</span>{{ end }}{{ if .CountedByName }}<span class="row-site-name">Contado por {{ .CountedByName }}</span>{{ end }}</td>
+                                    {{ end }}
+                                </tr>
+                                {{ else }}
+                                <tr>
+                                    <td colspan="5"><div class="empty-table"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17"></path><path d="M11 6h9M11 12h9M11 18h9"></path></svg><span>Nenhum material com saldo nesta obra.{{ if $.Buttons.Count }} Se encontrar material, acrescente abaixo.{{ end }}</span></div></td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {{ if .Buttons.Count }}
+                    <!-- Um formulário só para salvar e enviar: os campos da tabela
+                         entram nele pelo atributo form="count-form". O "acao"
+                         escondido é o que vale com JS (o app.js envia com
+                         form.submit(), que não leva o botão clicado); sem JS,
+                         o botão Enviar manda enviar=1. -->
+                    <form id="count-form" class="inventory-count-actions" method="POST" action="/inventarios/{{ $inv.ID }}">
+                        <input type="hidden" name="acao" value="salvar" id="count-action">
+                        <button class="button-secondary" type="submit" id="save-count">Salvar contagem</button>
+                        <button class="save-button" type="submit" name="enviar" value="1" id="send-count" data-confirm-optional>Enviar para aprovação</button>
+                    </form>
+
+                    {{ if .Materials }}
+                    <form class="inventory-add-form" method="POST" action="/inventarios/{{ $inv.ID }}">
+                        <input type="hidden" name="acao" value="adicionar">
+                        <label for="add-material">Acrescentar material encontrado</label>
+                        <div class="inventory-add-row">
+                            <select id="add-material" name="produto_id" data-searchable data-search-placeholder="Buscar material..." required>
+                                <option value="">Escolha o material</option>
+                                {{ range .Materials }}<option value="{{ .ID }}">{{ .Name }} ({{ .Unit }})</option>{{ end }}
+                            </select>
+                            <button class="button-secondary" type="submit">Acrescentar</button>
+                        </div>
+                    </form>
+                    {{ end }}
+                    {{ end }}
+
+                </div>
+
+                {{ if .Buttons.Reject }}
+                <div class="modal-edit" id="reject-modal" {{ if not .RejectOpen }}hidden{{ end }}>
+                    <div class="modal-edit-content" role="dialog" aria-modal="true" aria-labelledby="reject-title">
+                        <div class="modal-create-header">
+                            <div>
+                                <span class="edit-kicker">{{ $inv.Code }}</span>
+                                <h3 id="reject-title">Devolver para contagem</h3>
+                            </div>
+                            <a class="close-modal-button" href="/inventarios/{{ $inv.ID }}" id="close-reject-modal" aria-label="Fechar">&times;</a>
+                        </div>
+
+                        {{ if and .Error .RejectOpen }}
+                        <p class="form-error" role="alert">{{ .Error }}</p>
+                        {{ end }}
+
+                        <form class="create-form" method="POST" action="/inventarios/{{ $inv.ID }}">
+                            <input type="hidden" name="acao" value="rejeitar">
+                            <label for="reject-reason">Motivo</label>
+                            <textarea id="reject-reason" name="motivo" maxlength="300" rows="3" placeholder="Ex.: recontar o cimento, a diferença parece erro de contagem">{{ .RejectReason }}</textarea>
+                            <small class="role-help">A obra continua bloqueada, e quem conta vê o motivo no topo da contagem.</small>
+                            <button class="button-danger" type="submit">Devolver para contagem</button>
+                        </form>
+                    </div>
+                </div>
+                {{ end }}
+
+            </section>
+{{ end }}
+

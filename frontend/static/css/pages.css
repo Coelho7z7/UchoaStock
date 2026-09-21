@@ -1,0 +1,1039 @@
+/* Estilos específicos de cada tela. O que se repete entre telas fica no
+   components.css. */
+
+/* Dashboard */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: var(--space-5);
+    }
+}
+
+/* Os painéis do dashboard dividem a largura em dois, e com o espaçamento
+   normal das tabelas a coluna de data da atividade recente estourava o
+   painel. Vale só do tablet para cima: no celular a linha vira cartão e
+   tem o espaçamento dela. */
+@media (min-width: 768px) {
+
+    .dashboard-grid thead th,
+    .dashboard-grid tbody td {
+        padding-inline: var(--space-3);
+    }
+}
+
+/* Cartão "Hoje": mostra dois números (entradas e saídas) onde os outros
+   mostram um. */
+
+.today-counts {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+
+.today-in {
+    color: var(--color-success);
+}
+
+.today-out {
+    color: var(--color-warning);
+}
+
+.today-sep {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-normal);
+    color: var(--color-text-subtle);
+}
+
+/* Painel de materiais acabando */
+
+.activity-material {
+    font-weight: var(--weight-medium);
+}
+
+.last-handler {
+    line-height: var(--leading-tight);
+}
+
+.last-handler-name {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+}
+
+.last-handler-when {
+    display: block;
+    margin-top: var(--space-half);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.last-handler-none {
+    font-size: var(--text-xs);
+    font-style: italic;
+    color: var(--color-text-subtle);
+}
+
+.low-stock-more td {
+    padding-top: var(--space-3);
+    text-align: center;
+}
+
+.low-stock-more a {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+}
+
+/* Só no celular (ver tokens.css, breakpoints): a linha "e mais N" não
+   vira cartão como as outras. */
+@media (max-width: 767px) {
+
+    .low-stock-more {
+        border: none;
+        background: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .low-stock-more td::before {
+        content: none;
+    }
+}
+
+/* Materiais */
+
+/* Filtro com busca, ordenação e botão. No celular os três ficam um
+   embaixo do outro; com mais espaço, ficam na mesma linha e a busca
+   ocupa o que sobra. */
+.materials-filter {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+@media (min-width: 640px) {
+    .materials-filter {
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+    }
+}
+
+/* Moldura das tabelas. No celular ela não existe: cada linha já é um
+   cartão próprio, e a moldura dupla só roubaria espaço. */
+@media (min-width: 768px) {
+
+    .materials-table,
+    .stock-table,
+    .movement-table,
+    .users-table,
+    .edit-materials-table {
+        padding: var(--space-2);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+    }
+}
+
+/* Ações da linha (editar, remover, entrada e saída).
+
+   No desktop o <td> precisa continuar sendo célula de tabela. Com
+   display: flex direto nele, a linha divisória dessa coluna ficava
+   desalinhada das outras. Por isso o espaço entre os botões é margem, e
+   o flex só entra no celular, onde a linha já virou cartão. */
+.material-actions {
+    white-space: nowrap;
+}
+
+.material-actions > * {
+    vertical-align: middle;
+    margin-right: var(--space-2);
+}
+
+.material-actions > :last-child {
+    margin-right: 0;
+}
+
+/* Na tela de estoque existe um <form> vazio só para os campos da linha
+   apontarem para ele (atributo form=""). Sem esta regra ele ocuparia
+   uma linha inteira. */
+.material-actions > form:empty {
+    display: none;
+}
+
+/* Só no celular (ver tokens.css, breakpoints): a célula de ações virou
+   linha do cartão e passa a alinhar os botões em flex. */
+@media (max-width: 767px) {
+    .material-actions {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        white-space: normal;
+    }
+
+    .material-actions > * {
+        margin-right: 0;
+    }
+}
+
+/* Formulário dos modais de cadastro e edição. */
+.create-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.create-form label {
+    margin-top: var(--space-2);
+}
+
+.create-form button[type="submit"] {
+    margin-top: var(--space-4);
+}
+
+/* Minha senha */
+
+/* O formulário fica num cartão estreito. Três campos de senha esticados
+   na largura de um monitor ficam estranhos e difíceis de preencher. */
+.account-form {
+    max-width: 420px;
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+/* Obras */
+
+/* Nome e selo "Central" na mesma linha; se não couber, o selo desce. */
+.site-name {
+    margin-right: var(--space-2);
+    font-weight: var(--weight-semibold);
+}
+
+.site-type-central {
+    color: var(--color-info-text);
+    background: var(--color-info-tint);
+    border-color: var(--color-brand-soft);
+}
+
+/* Selos de situação da obra. O fim do nome vem do banco
+   (site-status-{{ .Status }}), por isso está em maiúsculas e não pode
+   ser renomeado. */
+.site-status-ANDAMENTO {
+    color: var(--color-success-text);
+    background: var(--color-success-tint);
+    border-color: var(--color-success);
+}
+
+.site-status-PARALISADA {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+    border-color: var(--color-warning);
+}
+
+.site-status-CONCLUIDA {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+/* Fornecedores: o selo "Desativado" usa o mesmo tom neutro da obra
+   concluída, e o CNPJ não quebra no meio. */
+.supplier-inactive {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+.supplier-cnpj {
+    white-space: nowrap;
+}
+
+/* Os botões "Abrir", "Paralisar", "Retomar" e "Encerrar" são cada um um
+   <form>, e precisam ficar na mesma linha do link "Editar". */
+.site-open-form,
+.site-status-form {
+    display: inline-block;
+}
+
+/* Nome da obra embaixo do material, quando a lista mostra "Todas as
+   obras". */
+.row-site-name {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-normal);
+    color: var(--color-text-muted);
+}
+
+/* Aviso fixo explicando por que a tela está só em consulta. Não usa
+   .form-success nem .form-error de propósito: o app.js transforma essas
+   em toast, que some sozinho, e este aviso precisa ficar na tela. */
+.scope-notice {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--color-info-text);
+    background: var(--color-info-tint);
+    border: 1px solid var(--color-brand-border);
+    border-radius: var(--radius-md);
+}
+
+/* Campo de situação no modal da obra. O [hidden] precisa de uma regra
+   própria, senão o display: flex ganha e o campo nunca some. */
+.site-status-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.site-status-field[hidden] {
+    display: none;
+}
+
+/* Equipe da obra: a lista de nomes pode quebrar em várias linhas. */
+.site-team {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* Usuários */
+
+/* Campo Obra no modal de usuário. Ele some quando a permissão escolhida
+   é Administrador, e o [hidden] precisa de regra própria pelo mesmo
+   motivo do .site-status-field. */
+.user-site-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.user-site-field[hidden] {
+    display: none;
+}
+
+/* Estoque */
+
+/* Entrada/saída: quantidade estreita e observação ao lado dos botões.
+   No celular a linha já virou cartão, então os dois ocupam a largura. */
+.stock-table .stock-qty-input,
+.stock-table .stock-note-input {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+
+    .stock-table .stock-qty-input {
+        width: var(--stock-qty-width);
+    }
+
+    .stock-table .stock-note-input {
+        width: var(--stock-note-width);
+    }
+}
+
+/* Unidade ao lado da quantidade. Ela fica menor e mais apagada porque o
+   que importa ler primeiro é o número. */
+
+.unit-label {
+    margin-left: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.minimum-cell {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.muted-dash {
+    color: var(--color-text-subtle);
+}
+
+/* Dois campos lado a lado no modal (quantidade e limite). No celular
+   ficam um embaixo do outro. */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+}
+
+.form-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-row label {
+    margin-top: var(--space-2);
+}
+
+@media (min-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+    }
+}
+
+/* Filtros das movimentações */
+
+.movements-filter {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+
+@media (min-width: 1024px) {
+    .movements-filter {
+        grid-template-columns: minmax(0, 1fr) 180px 180px auto;
+        align-items: end;
+    }
+}
+
+.movement-time {
+    margin-left: var(--space-2);
+    color: var(--color-text-muted);
+}
+
+.movement-note {
+    max-width: 260px;
+    color: var(--color-text-muted);
+}
+
+/* Alterar material */
+
+.edit-kicker {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-brand-light);
+}
+
+.delete-material-form,
+.delete-user-form {
+    display: inline;
+}
+
+/* Tabela de usuários */
+
+.users-table .role-badge {
+    margin-right: var(--space-1);
+}
+
+/* Acesso negado */
+
+.access-denied-page {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: var(--space-5);
+}
+
+/* Cartão com a tarja das faixas da marca no topo, como o do login. O
+   ::before da tarja fica no components.css, junto com o dos modais. */
+.access-denied-card {
+    --band-height: 72px;
+
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 480px;
+    padding: calc(var(--band-height) + var(--space-6)) var(--space-6) var(--space-6);
+    background:
+        linear-gradient(var(--color-border), var(--color-border)) 0 var(--band-height) / 100% 1px no-repeat,
+        var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+
+.access-denied-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+/* O margin auto centraliza o ícone. Ele é um bloco (display: grid), e o
+   text-align: center do cartão só centraliza texto. */
+.access-denied-icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto var(--space-4);
+    color: var(--color-danger);
+    background: var(--color-danger-tint);
+    border-radius: var(--radius-full);
+}
+
+.access-denied-icon svg {
+    width: var(--icon-2xl);
+    height: var(--icon-2xl);
+}
+
+.access-denied-kicker {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-danger);
+}
+
+.access-denied-card h1 {
+    margin-bottom: var(--space-3);
+    font-size: var(--text-2xl);
+}
+
+.access-denied-card p {
+    margin-bottom: var(--space-5);
+    color: var(--color-text-muted);
+}
+
+.access-denied-card button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target);
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-invert);
+    background: var(--color-brand);
+    border-radius: var(--radius-md);
+    transition: background var(--duration-fast) ease;
+}
+
+.access-denied-card button:hover {
+    background: var(--color-brand-strong);
+}
+
+
+/* Solicitações */
+
+/* Selos de situação da solicitação. Assim como os da obra, o fim do nome
+   vem do banco (request-status-{{ .Status }}) e não pode ser renomeado. */
+.request-status-PENDENTE {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+    border-color: var(--color-warning);
+}
+
+.request-status-APROVADA {
+    color: var(--color-info-text);
+    background: var(--color-info-tint);
+    border-color: var(--color-brand-soft);
+}
+
+.request-status-PARCIAL {
+    color: var(--color-gold);
+    background: var(--color-gold-tint);
+    border-color: var(--color-gold-border);
+}
+
+.request-status-ATENDIDA {
+    color: var(--color-success-text);
+    background: var(--color-success-tint);
+    border-color: var(--color-success);
+}
+
+.request-status-REJEITADA {
+    color: var(--color-danger-text);
+    background: var(--color-danger-tint);
+    border-color: var(--color-danger);
+}
+
+.request-status-CANCELADA {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+.request-number {
+    font-weight: var(--weight-semibold);
+    color: var(--color-brand-light);
+    white-space: nowrap;
+}
+
+/* Formulário de nova solicitação. Cada item é um bloco; no celular os
+   campos ficam um embaixo do outro e, do tablet para cima, na mesma
+   linha. */
+.request-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.request-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.request-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.request-item-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.request-item-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+}
+
+.request-item-quantity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.request-item-remove {
+    justify-self: end;
+}
+
+.request-add-row,
+.request-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.request-hint {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* Dados da solicitação, na tela de detalhe. */
+.request-info {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    margin: 0 0 var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.request-info div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.request-info dt {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+}
+
+.request-info dd {
+    margin: 0;
+    color: var(--color-text);
+}
+
+.request-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.request-items-section,
+.request-history-section,
+.requests-open-section {
+    margin-top: var(--space-5);
+}
+
+.request-item-removed {
+    margin-left: var(--space-2);
+    color: var(--color-danger-text);
+    background: var(--color-danger-tint);
+    border-color: var(--color-danger);
+}
+
+.request-item-done {
+    font-weight: var(--weight-semibold);
+    color: var(--color-success-text);
+}
+
+/* Quando o saldo da obra não cobre o que falta entregar, ele aparece em
+   vermelho na aprovação e no atendimento. Aprovar não reserva estoque,
+   então esse aviso ajuda quem vai decidir. */
+.request-balance-low {
+    font-weight: var(--weight-semibold);
+    color: var(--color-danger-text);
+}
+
+.request-balance-note {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-danger-text);
+}
+
+.request-serve-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--space-4);
+}
+
+/* Histórico da solicitação: uma linha por evento, com a cor da ação na
+   borda esquerda. */
+.request-history {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.request-event {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: var(--space-1) solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+}
+
+.request-event-CRIADA {
+    border-left-color: var(--color-brand-soft);
+}
+
+.request-event-APROVADA,
+.request-event-ATENDIMENTO {
+    border-left-color: var(--color-success);
+}
+
+.request-event-REJEITADA {
+    border-left-color: var(--color-danger);
+}
+
+.request-event-when,
+.request-event-detail {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.request-event-detail {
+    font-size: var(--text-sm);
+}
+
+/* Link "Req. #N" nas movimentações que vieram de uma solicitação. */
+.movement-request-link {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-brand-light);
+}
+
+@media (min-width: 768px) {
+    .request-item {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+        align-items: end;
+    }
+
+    .request-info {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .request-info-wide {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Relatórios */
+
+/* Os painéis do relatório ficam um embaixo do outro (o comparativo entre
+   obras só aparece em "Todas as obras"), então o espaço entre eles é
+   margem, e não o gap de um grid como no dashboard. */
+.report-section + .report-section {
+    margin-top: var(--space-5);
+}
+
+/* Saldo do período: verde quando entrou mais do que saiu, âmbar quando a
+   obra gastou o que já tinha em estoque. Uso os tons claros porque são os
+   que dão para ler no fundo escuro. */
+.report-balance {
+    font-weight: var(--weight-semibold);
+}
+
+.report-balance-up {
+    color: var(--color-success-text);
+}
+
+.report-balance-down {
+    color: var(--color-warning-text);
+}
+
+/* Inventários */
+
+/* Selos de situação do inventário. O template monta o nome com
+   inventory-status-{{ .Status }}, usando o valor de inventarios.status,
+   então esses nomes não podem ser renomeados. */
+
+.inventory-status-EM_CONTAGEM {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+    border-color: var(--color-warning);
+}
+
+.inventory-status-AGUARDANDO_APROVACAO {
+    color: var(--color-info-text);
+    background: var(--color-info-tint);
+    border-color: var(--color-brand-soft);
+}
+
+.inventory-status-APROVADO {
+    color: var(--color-success-text);
+    background: var(--color-success-tint);
+    border-color: var(--color-success);
+}
+
+.inventory-status-CANCELADO {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+.inventory-how-section,
+.inventory-items-section {
+    margin-top: var(--space-5);
+}
+
+/* Passos do "Como funciona". A numeração é feita pelo próprio CSS, com
+   counter. */
+.inventory-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: inventory-step;
+}
+
+.inventory-steps li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-3);
+    row-gap: var(--space-1);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-alt);
+    border-radius: var(--radius-md);
+    counter-increment: inventory-step;
+}
+
+.inventory-steps li::before {
+    content: counter(inventory-step);
+    grid-row: span 2;
+    font-weight: var(--weight-semibold);
+    color: var(--color-brand-light);
+}
+
+.inventory-steps strong {
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+}
+
+.inventory-steps span {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* Na contagem, o campo de quantidade é estreito (a unidade fica ao lado)
+   e o da justificativa ocupa o resto. */
+.inventory-count-table .inventory-qty-input {
+    width: 7rem;
+    margin-right: var(--space-1);
+}
+
+.inventory-count-table .inventory-note-input {
+    min-width: 14rem;
+}
+
+.inventory-diff {
+    font-weight: var(--weight-semibold);
+    white-space: nowrap;
+}
+
+.inventory-diff-up {
+    color: var(--color-success-text);
+}
+
+.inventory-diff-down {
+    color: var(--color-danger-text);
+}
+
+.inventory-count-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.inventory-add-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.inventory-add-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+    .inventory-add-row {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .inventory-add-row select {
+        flex: 1;
+    }
+}
+
+/* ============================================================
+   Patrimônio
+   ============================================================ */
+
+/* Número da plaqueta: algarismos de mesma largura, para a coluna
+   alinhar. */
+.asset-number {
+    font-weight: var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.asset-name {
+    font-weight: var(--weight-semibold);
+}
+
+/* Selos de situação. O sufixo vem do banco (asset-status-{{ .Status }}),
+   por isso fica em maiúsculas: não renomear. */
+.asset-status-EM_USO {
+    color: var(--color-success-text);
+    background: var(--color-success-tint);
+    border-color: var(--color-success);
+}
+
+.asset-status-MANUTENCAO {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+    border-color: var(--color-warning);
+}
+
+.asset-status-BAIXADO {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+/* Cartões de ação do detalhe (transferir, mudar situação, editar): um
+   embaixo do outro no celular, lado a lado a partir do tablet. */
+.asset-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.asset-action-card {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+/* O botão de cada cartão vai para a base, para os três ficarem na mesma
+   linha mesmo com formulários de alturas diferentes lado a lado. O campo
+   antes dele guarda a distância que o margin-top: auto tirou. */
+.asset-action-card button[type="submit"] {
+    margin-top: auto;
+}
+
+.asset-action-card > :nth-last-child(2) {
+    margin-bottom: var(--space-4);
+}
+
+.asset-action-card h4 {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--color-text);
+}
+
+/* Histórico: a cor da borda segue a ação (asset-event-{{ .Action }}). */
+.asset-event-CADASTRO {
+    border-left-color: var(--color-brand-soft);
+}
+
+.asset-event-TRANSFERENCIA {
+    border-left-color: var(--color-success);
+}
+
+.asset-event-SITUACAO {
+    border-left-color: var(--color-warning);
+}
+
+@media (min-width: 768px) {
+    .asset-actions {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+}

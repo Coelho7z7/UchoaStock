@@ -1,0 +1,179 @@
+package web
+
+import (
+	"errors"
+	"log"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"uchoastock/backend/models"
+	"uchoastock/backend/services"
+	"uchoastock/backend/utils"
+)
+
+// stockHandler exibe a tela de entrada e saída de material e processa
+// cada movimentação (POST).
+func stockHandler(w http.ResponseWriter, r *http.Request, user *models.User) {
+	scope, ok := requireSiteScope(w, r, user)
+	if !ok {
+		return
+	}
+
+	data := struct {
+		User         *models.User
+		Scope        siteScope
+		Materials    []models.Material
+		Search       string
+		Message      string
+		Error        string
+		PreviousPage int
+		NextPage     int
+		TotalPages   int
+		Page         int
+		// CanManageUsers mostra a aba Usuários.
+		CanManageUsers bool
+		// Nav são os contadores da barra lateral.
+		Nav navData
+		// CanEditMaterial mostra a aba Alterar material.
+		CanEditMaterial bool
+		// OpenInventoryID é o inventário aberto da obra escolhida (0 se não
+		// houver), para o aviso de que entrada e saída estão bloqueadas.
+		OpenInventoryID   int
+		OpenInventoryCode string
+	}{
+		User:            user,
+		Scope:           scope,
+		CanManageUsers:  can(user, PermManageUsers),
+		Nav:             buildNav(user, scope),
+		CanEditMaterial: can(user, PermEditMaterial),
+	}
+
+	messages := map[string]string{
+		"entrada":    "Entrada registrada com sucesso.",
+		"saida":      "Saída registrada com sucesso.",
+		"cadastrado": "Material cadastrado com sucesso.",
+	}
+
+	// FormValue lê tanto da URL (GET) quanto do formulário (POST): a busca
+	// e a página vêm como campos escondidos em cada linha, para a tela
+	// voltar exatamente onde a pessoa estava depois de movimentar.
+	data.Search = strings.TrimSpace(r.FormValue("busca"))
+	page, _ := strconv.Atoi(r.FormValue("pagina"))
+	if page < 1 {
+		page = 1
+	}
+
+	if r.Method == http.MethodPost {
+		// Precisa da permissão e, com uma obra escolhida, de poder agir nela
+		// (a própria obra, ou qualquer uma para quem tem PermAllSites). Sem
+		// obra escolhida ("Todas as obras"), o switch abaixo explica o
+		// problema em vez de negar acesso.
+		if !can(user, PermMoveStock) || (scope.Current != nil && !canMoveStockAt(user, scope.Current.ID)) {
+			renderAccessDenied(w)
+			return
+		}
+		materialID, idErr := strconv.Atoi(r.FormValue("material_id"))
+		quantity, qtyErr := utils.ParseQuantity(r.FormValue("quantidade"))
+		note := r.FormValue("observacao")
+		action := r.FormValue("acao")
+
+		// A obra vem da sessão, não do formulário: o obra_id do formulário
+		// só serve para conferir que ninguém trocou de obra em outra aba.
+		var opErr error
+		switch {
+		case !sameSiteAsForm(r, scope):
+			data.Error = siteChangedMessage
+		case scope.Current == nil:
+			data.Error = "Selecione uma obra no topo para registrar entrada ou saída."
+		case !scope.CanMove():
+			opErr = services.ErrSiteFinished
+		case idErr != nil:
+			data.Error = "Material inválido."
+		case qtyErr != nil || quantity <= 0:
+			data.Error = "Informe uma quantidade maior que zero."
+		case action == "entrada":
+			opErr = services.AddStockWeb(materialID, scope.Current.ID, quantity, user.ID, note)
+		case action == "saida":
+			opErr = services.RegisterStockExitWeb(materialID, scope.Current.ID, quantity, user.ID, note)
+		default:
+			data.Error = "Ação inválida."
+		}
+
+		if opErr != nil {
+			data.Error = stockErrorMessage(opErr)
+		} else if data.Error == "" {
+			redirectToStock(w, r, action, materialID, data.Search, page)
+			return
+		}
+	} else if r.Method != http.MethodGet {
+		w.Header().Set("Allow", "GET, POST")
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	materials, total, err := services.PaginatedMaterials(data.Search, page, materialsPerPage, scope.SiteID())
+	if err != nil {
+		log.Println("erro em PaginatedMaterials:", err)
+		http.Error(w, "Erro ao buscar materiais", http.StatusInternalServerError)
+		return
+	}
+
+	data.Materials = materials
+	data.Page = page
+
+	if scope.Current != nil {
+		if data.OpenInventoryID, err = services.OpenInventoryAt(scope.Current.ID); err != nil {
+			log.Println("erro em OpenInventoryAt:", err)
+		} else if data.OpenInventoryID > 0 {
+			data.OpenInventoryCode = services.InventoryCode(data.OpenInventoryID)
+		}
+	}
+
+	data.TotalPages = (total + materialsPerPage - 1) / materialsPerPage
+	if data.TotalPages < 1 {
+		data.TotalPages = 1
+	}
+
+	data.PreviousPage = page - 1
+	data.NextPage = page + 1
+
+	if data.Message == "" {
+		data.Message = messages[r.URL.Query().Get("sucesso")]
+	}
+
+	render(w, formStatus(data.Error), "stock", data)
+}
+
+// stockErrorMessage escolhe o que mostrar na tela para um erro de estoque
+// ou do catálogo de materiais, como siteErrorMessage: regra de negócio
+// (StockInputError, saldo insuficiente, obra concluída ou em inventário)
+// aparece como veio; erro do banco vai para o log e a pessoa vê uma
+// mensagem genérica, sem detalhe interno.
+func stockErrorMessage(err error) string {
+	var inputErr services.StockInputError
+	if errors.As(err, &inputErr) ||
+		errors.Is(err, services.ErrInsufficientStock) ||
+		errors.Is(err, services.ErrSiteFinished) ||
+		errors.Is(err, services.ErrSiteInInventory) {
+		return err.Error()
+	}
+	log.Println("erro no estoque ou no catálogo de materiais:", err)
+	return "Não foi possível concluir a operação. Tente novamente."
+}
+
+// redirectToStock volta para a tela de estoque depois de uma
+// movimentação, mantendo a busca e a página, e com destaque na linha do
+// material movimentado (o app.js acende a linha). url.Values monta a query
+// string já com os caracteres especiais escapados ("m³", espaços...).
+func redirectToStock(w http.ResponseWriter, r *http.Request, action string, materialID int, search string, page int) {
+	query := url.Values{"sucesso": {action}, "destaque": {strconv.Itoa(materialID)}}
+	if search != "" {
+		query.Set("busca", search)
+	}
+	if page > 1 {
+		query.Set("pagina", strconv.Itoa(page))
+	}
+	http.Redirect(w, r, "/estoque?"+query.Encode(), http.StatusSeeOther)
+}

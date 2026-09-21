@@ -1,0 +1,752 @@
+/* Layout das telas internas: sidebar, topbar, área de conteúdo e o menu
+   do celular.
+
+   O arquivo é mobile-first: a base é o celular e cada @media (min-width)
+   acrescenta o que muda em telas maiores. Escrever o desktop primeiro e
+   corrigir o celular depois acaba em !important para todo lado. */
+
+/* Transparente de propósito: quem pinta o fundo é o body, com o
+   gradiente do tema. */
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: transparent;
+}
+
+/* Sidebar
+
+   No celular ela fica escondida fora da tela e entra como uma gaveta
+   quando alguém toca no botão de menu. Quem abre e fecha é o app.js,
+   ligando e desligando a classe .mobile-menu-open no <body>. */
+
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: var(--z-sidebar);
+    display: flex;
+    flex-direction: column;
+    width: min(300px, 86vw);
+    height: 100dvh;
+    padding: var(--space-5) var(--space-4) var(--space-4);
+    overflow-y: auto;
+    background: var(--color-sidebar);
+    background-image: var(--color-sidebar-gradient);
+    color: var(--color-text-sidebar);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform var(--duration-slow) var(--ease-emphasized),
+        visibility var(--duration-slow);
+}
+
+body.mobile-menu-open .sidebar {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+/* Com a gaveta abrindo, os itens do menu chegam um atrás do outro,
+   acompanhando o painel. Só no celular (ver tokens.css, breakpoints):
+   no tablet em diante a barra é fixa e não "abre". backwards (e não both) de propósito: terminada a
+   animação, nada dela fica valendo no item. */
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+
+    body.mobile-menu-open .sidebar nav a {
+        animation: gs-drawer-item-in var(--duration-slow) var(--ease-emphasized) backwards;
+        animation-delay: calc(80ms + var(--nav-i, 8) * 30ms);
+    }
+
+    .sidebar nav a:nth-child(1) { --nav-i: 0; }
+    .sidebar nav a:nth-child(2) { --nav-i: 1; }
+    .sidebar nav a:nth-child(3) { --nav-i: 2; }
+    .sidebar nav a:nth-child(4) { --nav-i: 3; }
+    .sidebar nav a:nth-child(5) { --nav-i: 4; }
+    .sidebar nav a:nth-child(6) { --nav-i: 5; }
+    .sidebar nav a:nth-child(7) { --nav-i: 6; }
+    .sidebar nav a:nth-child(8) { --nav-i: 7; }
+}
+
+@keyframes gs-drawer-item-in {
+    from {
+        opacity: 0;
+        transform: translateX(-12px);
+    }
+}
+
+/* ---------- Marca ----------
+   Mesmo arranjo do login: a logo à esquerda e, ao lado, o nome com
+   uma linha de apoio embaixo. Uma linha fina separa a marca do menu
+   (antes era uma pílula com borda, apertada e diferente do login). */
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    padding: 0 var(--space-2) var(--space-5);
+    font-size: var(--text-base);
+    line-height: var(--leading-tight);
+    border-bottom: 1px solid var(--color-border-dark);
+}
+
+.logo-image {
+    height: 40px;
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.logo-text strong {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-invert);
+    white-space: nowrap;
+}
+
+.logo-text small {
+    margin-top: var(--space-half);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-normal);
+    letter-spacing: normal;
+    color: var(--color-text-subtle);
+}
+
+/* Menu */
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.sidebar nav a {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--touch-target);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-sidebar);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background var(--duration-base) var(--ease-out),
+        color var(--duration-base) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
+}
+
+.sidebar nav a .nav-icon {
+    transition: color var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-spring);
+}
+
+/* Ao passar o mouse, um brilho atravessa o item e ele anda um pouco
+   para a direita. */
+.sidebar nav a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(100deg,
+            transparent 15%,
+            var(--color-white-8) 50%,
+            transparent 85%);
+    transform: translateX(-120%);
+}
+
+/* Contadores do item "Solicitações". O primeiro é empurrado para a
+   direita e o segundo fica colado nele (quem aprova e atende vê os dois). */
+.nav-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--space-5);
+    padding: 0 var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    border-radius: var(--radius-full);
+}
+
+.nav-badge:first-of-type {
+    margin-left: auto;
+}
+
+.nav-badge-pending {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+}
+
+.nav-badge-serve {
+    color: var(--color-info-text);
+    background: var(--color-info-tint);
+}
+
+.sidebar nav a:hover {
+    color: var(--color-text-invert);
+    background: var(--color-sidebar-hover);
+    text-decoration: none;
+    box-shadow: inset 0 0 0 1px var(--color-brand-border);
+}
+
+/* O empurrão, o brilho que atravessa e o ícone que cresce só onde há
+   mouse de verdade. No celular o toque deixava o item "preso" no estado
+   de hover, deslocado para a direita, até tocar em outro lugar. */
+@media (hover: hover) {
+
+    .sidebar nav a:hover {
+        transform: translateX(3px);
+    }
+
+    .sidebar nav a:hover .nav-icon {
+        transform: scale(1.1);
+    }
+
+    .sidebar nav a:hover::after {
+        opacity: 1;
+        animation: gs-nav-sheen 650ms ease both;
+    }
+}
+
+@keyframes gs-nav-sheen {
+    to {
+        transform: translateX(120%);
+    }
+}
+
+/* Página atual: barrinha na lateral, fundo e texto mais forte. São três
+   sinais juntos para dar para ver de relance, sem depender só da cor. */
+.sidebar nav a.tab-active {
+    color: var(--color-text-invert);
+    background: linear-gradient(90deg, var(--color-brand-tint), transparent), var(--color-brand-tint);
+    box-shadow: inset 0 0 0 1px var(--color-brand-border);
+    font-weight: var(--weight-semibold);
+}
+
+.sidebar nav a.tab-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 22px;
+    margin-top: -11px;
+    background: var(--color-brand-soft);
+    border-radius: 0 var(--radius-full) var(--radius-full) 0;
+    box-shadow: 0 0 10px var(--color-brand-glow);
+}
+
+/* A barrinha da página ativa cresce do centro quando a tela abre: um
+   sinal discreto de "você chegou aqui". */
+@media (prefers-reduced-motion: no-preference) {
+
+    .sidebar nav a.tab-active::before {
+        animation: gs-nav-indicator-in var(--duration-slow) var(--ease-spring) 120ms backwards;
+    }
+}
+
+@keyframes gs-nav-indicator-in {
+    from {
+        transform: scaleY(0);
+        opacity: 0;
+    }
+}
+
+.sidebar nav a.tab-active .nav-icon {
+    color: var(--color-brand-light);
+}
+
+.nav-icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: 0 0 var(--icon-md);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Rodapé da sidebar */
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border-dark);
+}
+
+/* "Sair" é discreto de propósito, para não disputar atenção com os
+   botões de ação das telas. O vermelho só aparece no hover, avisando que
+   ali se sai do sistema. "Minha senha" tem o mesmo formato, mas o hover
+   é azul, porque não é uma saída. */
+.sidebar-logout,
+.sidebar-account {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--touch-target);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-sidebar);
+    border: 1px solid var(--color-border-dark);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background var(--duration-fast) ease,
+        color var(--duration-fast) ease,
+        border-color var(--duration-fast) ease;
+}
+
+.sidebar-logout:hover {
+    color: var(--color-danger-text);
+    background: var(--color-danger-tint);
+    border-color: var(--color-danger-solid);
+    text-decoration: none;
+}
+
+.sidebar-account:hover,
+.sidebar-account.tab-active {
+    color: var(--color-brand-light);
+    background: var(--color-brand-tint);
+    border-color: var(--color-brand-border);
+    text-decoration: none;
+}
+
+/* Fundo escurecido atrás do menu aberto no celular */
+
+.mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-overlay);
+    background: var(--color-overlay);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--duration-slow) var(--ease-emphasized),
+        visibility var(--duration-slow);
+}
+
+body.mobile-menu-open .mobile-sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Com o menu aberto, a página de trás não rola. */
+body.mobile-menu-open {
+    overflow: hidden;
+}
+
+/* Conteúdo */
+
+/* O shell não se anima: quem entra são os blocos do conteúdo, logo
+   abaixo. Antes o .main-content subia com "animation ... both" em cima de
+   transform, e isso fazia dele o ponto de referência de todo
+   position: fixed lá dentro — os modais, que moram no conteúdo, deixavam
+   de cobrir a barra lateral. */
+.main-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+}
+
+/* ---------- Entrada da página ----------
+   Cada bloco do conteúdo (cabeçalho, abas, filtro, avisos, tabela) sobe
+   um pouco depois do anterior. Só CSS: começa na primeira pintura, sem
+   esperar o JS e sem a piscada de "aparece, some, volta" que a versão em
+   JS tinha.
+
+   fill-mode backwards: durante a espera o bloco fica no quadro inicial
+   (invisível) e, terminada a animação, ela não deixa transform nenhum
+   valendo. Com forwards/both o bloco guardaria um transform e prenderia
+   os position: fixed de dentro (o mesmo problema do .main-content).
+   Os modais ficam de fora: eles têm a própria entrada, a cada abertura. */
+@media (prefers-reduced-motion: no-preference) {
+
+    .content > :not(.modal-create):not(.modal-edit),
+    .access-denied-card {
+        animation: gs-page-block-in var(--duration-slower) var(--ease-emphasized) backwards;
+        animation-delay: calc(var(--block-i, 6) * var(--stagger-step));
+    }
+
+    .content > :nth-child(1) { --block-i: 0; }
+    .content > :nth-child(2) { --block-i: 1; }
+    .content > :nth-child(3) { --block-i: 2; }
+    .content > :nth-child(4) { --block-i: 3; }
+    .content > :nth-child(5) { --block-i: 4; }
+    .content > :nth-child(6) { --block-i: 5; }
+    .access-denied-card { --block-i: 0; }
+}
+
+@keyframes gs-page-block-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+}
+
+/* Topbar */
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--topbar-height);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-topbar);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border-bottom: 1px solid var(--color-border);
+    transition: box-shadow var(--duration-slow) var(--ease-out),
+        border-color var(--duration-slow) var(--ease-out);
+}
+
+/* Página rolada (o app.js liga .gs-scrolled no body): a topbar ganha
+   sombra e borda mais firme, mostrando que o conteúdo passa por baixo. */
+body.gs-scrolled .topbar {
+    border-bottom-color: var(--color-border-strong);
+    box-shadow: var(--shadow-topbar);
+}
+
+.topbar h2 {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--text-lg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Botão de menu (só no celular) */
+
+.mobile-menu-button {
+    display: inline-grid;
+    place-items: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    flex: 0 0 var(--touch-target);
+    color: var(--color-text);
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border-input);
+    border-radius: var(--radius-md);
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) ease;
+}
+
+.mobile-menu-button:hover {
+    background: var(--color-surface-hover);
+}
+
+.mobile-menu-button svg {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+/* Nome e cargo de quem está logado */
+
+.user {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 0;
+    margin-left: auto;
+    text-align: right;
+}
+
+.user-name {
+    display: block;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+}
+
+.user-role {
+    display: inline-flex;
+    align-items: center;
+    margin-top: var(--space-half);
+    padding: var(--space-px) var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+}
+
+.user-role-superadmin,
+.user-role-admin {
+    color: var(--color-info-text);
+    background: var(--color-info-tint);
+}
+
+.user-role-manager {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+}
+
+.user-role-user {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+}
+
+.user-role-storekeeper {
+    color: var(--color-success-text);
+    background: var(--color-success-tint);
+}
+
+.user-role-auditor {
+    color: var(--color-brand-light);
+    background: var(--color-surface-alt);
+}
+
+/* Seletor de obra. No celular ele não cabe na mesma linha do título e do
+   usuário, então a topbar quebra e o seletor ganha uma linha só dele
+   embaixo. Do tablet para cima ele volta para o lado do usuário. */
+
+.site-switcher {
+    order: 3;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 1 0 100%;
+    min-width: 0;
+}
+
+.site-switcher-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+}
+
+.site-switcher select,
+.site-switcher .gs-combobox {
+    flex: 1;
+    min-width: 0;
+}
+
+.site-switcher select,
+.site-switcher .gs-combobox-button {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+}
+
+/* Área de conteúdo */
+
+.content {
+    flex: 1;
+    width: 100%;
+    padding: var(--space-4);
+}
+
+.eyebrow {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-brand-light);
+}
+
+/* ============================================================
+   Tabelas no celular: cada linha vira um cartão
+   Só no celular (ver tokens.css, breakpoints).
+
+   Uma tabela de verdade não cabe na largura do celular. O app.js
+   (initResponsiveTableLabels) copia o texto de cada <th> para o
+   data-label da célula da mesma coluna, e aqui esse texto aparece como
+   rótulo antes do valor. */
+
+@media (max-width: 767px) {
+
+    .content table,
+    .content thead,
+    .content tbody,
+    .content tr,
+    .content td {
+        display: block;
+        width: 100%;
+    }
+
+    .content thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+
+    .content tbody tr {
+        margin-bottom: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* O valor fica todo junto à direita (flex-end) e o rótulo é
+       empurrado para a esquerda pelo margin-right: auto dele, logo
+       abaixo. Com space-between, um valor em duas partes, como "1,3" e
+       "m³", ficaria com cada parte num canto. */
+    .content tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--space-2);
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--color-border);
+        text-align: right;
+    }
+
+    .content tbody td:last-child {
+        border-bottom: none;
+    }
+
+    .content tbody td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        margin-right: auto;
+        padding-right: var(--space-2);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: var(--tracking-wide);
+        color: var(--color-text-muted);
+        text-align: left;
+    }
+
+    /* "Último a mexer" mostra duas informações, uma embaixo da outra:
+       quem mexeu e quando. Em flex os dois <span> ficavam lado a lado,
+       a linha passava da largura do cartão e o rótulo aparecia cortado.
+       Com grid eles voltam a empilhar: o rótulo na primeira coluna e as
+       duas linhas do valor na segunda. */
+    .content tbody td.last-handler {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: var(--space-2);
+    }
+
+    .content tbody td.last-handler > * {
+        grid-column: 2;
+    }
+
+    .content tbody td.last-handler::before {
+        margin-right: 0;
+        padding-right: 0;
+    }
+
+    /* A célula de "nenhum registro" ocupa a linha toda, sem rótulo. */
+    .content tbody td[colspan] {
+        display: block;
+        text-align: center;
+    }
+
+    .content tbody td[colspan]::before {
+        content: none;
+    }
+}
+
+/* Tablet em diante: a sidebar fica fixa e o botão de menu some. Os 768px
+   precisam bater com o app.js, que fecha a gaveta a partir dessa largura. */
+
+@media (min-width: 768px) {
+
+    .sidebar {
+        position: fixed;
+        width: var(--sidebar-width);
+        padding: var(--space-6) var(--space-5) var(--space-5);
+        transform: none;
+        visibility: visible;
+        box-shadow: none;
+        border-right: 1px solid var(--color-border-dark);
+    }
+
+    .mobile-menu-button,
+    .mobile-sidebar-overlay {
+        display: none;
+    }
+
+    /* Se o body ficar com a classe do menu aberto, a rolagem não trava. */
+    body.mobile-menu-open {
+        overflow: auto;
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-width);
+    }
+
+    .topbar {
+        flex-wrap: nowrap;
+        min-height: 70px;
+        padding: var(--space-3) var(--space-6);
+    }
+
+    .site-switcher {
+        order: 0;
+        flex: 0 1 300px;
+    }
+
+    /* O título grande fica no .page-hero; o da topbar só diz onde a
+       pessoa está. */
+    .topbar h2 {
+        font-size: var(--text-lg);
+    }
+
+    .content {
+        padding: var(--space-6);
+    }
+
+    .user-name {
+        max-width: 220px;
+    }
+}
+
+/* Desktop */
+
+@media (min-width: 1024px) {
+
+    .content {
+        padding: var(--space-6) var(--space-7);
+    }
+}
+
+/* Telas largas: o conteúdo para de esticar, senão as linhas ficam longas
+   demais para ler. */
+
+@media (min-width: 1280px) {
+
+    /* O margin-inline: auto centraliza. Só com o max-width, o conteúdo
+       ficaria grudado na esquerda com um vazio à direita. */
+    .content {
+        max-width: 1400px;
+        margin-inline: auto;
+    }
+}

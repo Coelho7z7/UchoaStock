@@ -1,0 +1,134 @@
+{{ template "app" (layout . "patrimonio") }}
+
+{{ define "title" }}Patrimônio{{ end }}
+{{ define "body-class" }}assets-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">{{ with .Scope.Current }}{{ .Name }}{{ else }}Todas as obras{{ end }}</span>
+                        <h3>Patrimônio</h3>
+                        <p>Ferramentas e equipamentos da empresa, cada um com o seu número de patrimônio. Aqui se vê em qual obra cada bem está, e cada transferência fica no histórico.</p>
+                        <div class="page-hero-actions">
+                            {{ if .CanCreate }}
+                            <a class="new-material-button" href="/patrimonio?novo=1" id="open-create-asset">Novo bem</a>
+                            {{ end }}
+                        </div>
+                    </div>
+                </header>
+
+                <form class="materials-filter" method="GET" action="/patrimonio" data-live-search>
+                    <input type="search" name="busca" value="{{ .Search }}" placeholder="Buscar por número, nome ou descrição" aria-label="Buscar bem">
+                    <select name="situacao" aria-label="Filtrar por situação">
+                        <option value="">Em uso e em manutenção</option>
+                        {{ range .Statuses }}<option value="{{ .Value }}"{{ if eq .Value $.Status }} selected{{ end }}>{{ .Label }}</option>{{ end }}
+                        <option value="{{ .StatusAll }}"{{ if eq .StatusAll .Status }} selected{{ end }}>Todos, inclusive baixados</option>
+                    </select>
+                    <button type="submit">Filtrar</button>
+                </form>
+
+                {{ if and .FormError (not .Form) }}
+                <p class="form-error" role="alert">{{ .FormError }}</p>
+                {{ end }}
+
+                <div class="materials-table page-table assets-table" data-live-region="tabela">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Nº</th>
+                                <th>Bem</th>
+                                <th>Obra</th>
+                                <th>Situação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {{ range .Assets }}
+
+                            <tr>
+                                <td><span class="asset-number">{{ .Number }}</span></td>
+                                <td>
+                                    <span class="asset-name">{{ .Name }}</span>
+                                    {{ if .Description }}<span class="row-site-name">{{ .Description }}</span>{{ end }}
+                                </td>
+                                <td>{{ .SiteName }}</td>
+                                <td><span class="badge asset-status-{{ .Status }}">{{ .FormattedStatus }}</span></td>
+                                <td class="material-actions">
+                                    <a class="edit-material-link" href="/patrimonio/{{ .ID }}" aria-label="Abrir {{ .Name }} ({{ .Number }})">Abrir</a>
+                                </td>
+                            </tr>
+
+                            {{ else }}
+
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-table"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg><span>Nenhum bem encontrado para esse filtro.</span></div>
+                                </td>
+                            </tr>
+
+                            {{ end }}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {{ if .CanCreate }}
+                <!-- O servidor manda o modal aberto (sem hidden) com ?novo=1 ou
+                     quando o cadastro deu erro; sem JS, o link "Novo bem"
+                     continua funcionando. -->
+                <div class="modal-edit" id="asset-modal" {{ if not .Form }}hidden{{ end }}>
+                    <div class="modal-edit-content" role="dialog" aria-modal="true" aria-labelledby="asset-modal-title">
+                        <div class="modal-create-header">
+                            <div>
+                                <span class="edit-kicker">Patrimônio</span>
+                                <h3 id="asset-modal-title">Novo bem</h3>
+                            </div>
+                            <a class="close-modal-button" href="/patrimonio" id="close-asset-modal" aria-label="Fechar">&times;</a>
+                        </div>
+
+                        {{ if and .FormError .Form }}
+                        <p class="form-error" role="alert">{{ .FormError }}</p>
+                        {{ end }}
+
+                        <form class="create-form" action="/patrimonio" method="POST">
+                            <input type="hidden" name="acao" value="cadastrar">
+
+                            <div class="form-row">
+                                <div>
+                                    <label for="asset-number">Nº de patrimônio</label>
+                                    <input id="asset-number" type="text" name="numero" maxlength="30" value="{{ with .Form }}{{ .Number }}{{ end }}" placeholder="Ex.: PAT-0142" required>
+                                </div>
+                                <div>
+                                    <label for="asset-site">Obra</label>
+                                    <select id="asset-site" name="obra" required>
+                                        <option value="">Escolha a obra</option>
+                                        {{ range .Scope.Sites }}{{ if ne .Status "CONCLUIDA" }}<option value="{{ .ID }}"{{ if $.Form }}{{ if eq .ID $.Form.SiteID }} selected{{ end }}{{ else if $.Scope.Current }}{{ if eq .ID $.Scope.Current.ID }} selected{{ end }}{{ end }}>{{ .Name }}</option>{{ end }}{{ end }}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label for="asset-name">Nome</label>
+                            <input id="asset-name" type="text" name="nome" maxlength="100" value="{{ with .Form }}{{ .Name }}{{ end }}" placeholder="Ex.: Betoneira 400 L" required>
+
+                            <label for="asset-description">Descrição <small>(opcional)</small></label>
+                            <textarea id="asset-description" name="descricao" maxlength="300" rows="3" placeholder="Ex.: marca, modelo, número de série">{{ with .Form }}{{ .Description }}{{ end }}</textarea>
+
+                            <small class="role-help">O bem nasce em uso, na obra escolhida. Obra concluída não aparece na lista.</small>
+
+                            <button class="save-button" type="submit">Cadastrar bem</button>
+                        </form>
+                    </div>
+                </div>
+                {{ end }}
+
+            </section>
+{{ end }}
+

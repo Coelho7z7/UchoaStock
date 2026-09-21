@@ -5,9 +5,15 @@ Sem venda, sem preço, sem PDV: só entrada, saída e alerta do que está acaban
 
 BACKEND
 
-cmd/
-- main.go — servidor
-- project.go — projeto
+cmd/  (ponto de entrada)
+- main.go — inicialização e servidor web
+- cli.go — comandos administrativos (reset-password, create-user, rename-user, change-email)
+- verify_stock.go — comando verify-stock
+- project.go — acha a raiz do projeto (para o caminho padrão do banco)
+
+web/  (camada HTTP)
+- routes.go — todas as rotas e a proteção contra CSRF
+- render.go — carrega os templates uma vez, render() e arquivos estáticos com cache
 - auth_handler.go — login
 - authorization.go — middleware withUser, acesso negado e regras por obra
 - permissions.go — permissões por ação: o que cada cargo pode fazer
@@ -17,6 +23,7 @@ cmd/
 - site_scope.go — obra selecionada no topo (seletor e troca de obra)
 - material_handler.go — materiais
 - stock_handler.go — estoque
+- asset_handler.go — patrimônio (lista com cadastro, detalhe com transferir, situação, editar e histórico)
 - movement_handler.go — movimentações
 - report_handler.go — relatórios: período na URL, atalhos de 7/30/90 dias
 - request_handler.go — solicitações (lista, nova, detalhe e ações) e contadores da barra lateral
@@ -26,6 +33,8 @@ services/
 - material_create.go — cadastro de materiais
 - material_query.go — consultas de materiais e alerta de estoque baixo
 - stock_service.go — entradas e saídas
+- asset_service.go — patrimônio: cadastrar, editar, transferir, mudar situação
+- asset_query.go — patrimônio: lista, detalhe e histórico
 - movement_service.go — movimentações
 - report_query.go — relatórios: resumo do período, consumo por material e comparativo entre obras
 - user_auth.go — autenticação
@@ -41,6 +50,7 @@ services/
 - request_query.go — solicitações: lista, contadores, detalhe com itens e histórico
 
 models/
+- asset.go
 - material.go
 - movement.go
 - request.go
@@ -56,14 +66,26 @@ utils/
 
 FRONTEND
 
-html/
-- index.html — login
+frontend.go — embute templates/ e static/ no binário (go:embed)
+
+templates/layouts/
+- app.html — esqueleto das telas internas: head, sidebar, topbar, conteúdo e scripts
+
+templates/partials/
+- head.html — meta e CSS comuns (com versão automática ?v=hash)
+- sidebar.html — barra lateral e contadores de solicitação
+- topbar.html — topbar e selo do cargo
+- site_switcher.html — seletor de obra da topbar
+
+templates/pages/
+- login.html — login
 - dashboard.html — dashboard
 - sites.html — obras
-- site_switcher.html — seletor de obra da topbar e contadores de solicitação da barra lateral (incluído pelas telas internas)
 - materials.html — materiais
 - edit_material.html — editar material
 - stock.html — estoque
+- assets.html — lista do patrimônio e cadastro de bem
+- asset_detail.html — detalhe do bem (transferir, mudar situação, editar, histórico)
 - movements.html — movimentações
 - reports.html — relatórios (consumo por material e comparativo entre obras)
 - requests.html — lista de solicitações
@@ -74,7 +96,7 @@ html/
 - access_denied.html — acesso negado
 - not_found.html — página 404 (com sessão, no layout do sistema; sem sessão, só o cartão). Também é a resposta para solicitação fora do alcance
 
-css/  (design system — a ordem dos <link> importa, é cascata)
+static/css/  (design system — a ordem dos <link> importa, é cascata)
 - tokens.css — :root: cores, espaçamento, tipografia, raios, sombras
 - base.css — reset, tipografia, foco/acessibilidade
 - components.css — botões, inputs, tabelas, cards, modais, badges, toasts
@@ -122,7 +144,7 @@ fica sem obra (NULL).
 
 PERMISSÕES
 
-O acesso é por ação, não por nome de cargo. backend/cmd/permissions.go tem
+O acesso é por ação, não por nome de cargo. backend/web/permissions.go tem
 a lista de permissões e o map rolePermissions (cargo -> permissões), que é
 a fonte única da verdade. Toda checagem passa por can(usuario, permissao).
 Criar um cargo = uma linha nesse map + o cargo em services.validRoles.
@@ -151,6 +173,8 @@ Cargos (valor gravado no banco entre parênteses):
 | inventario.contar       |   x   |   x    |     x      |             |         |
 | inventario.aprovar      |   x   |   x    |            |             |         |
 | inventario.aprovar_propria |    |        |            |             |         |
+| patrimonio.editar       |   x   |        |            |             |         |
+| patrimonio.movimentar   |   x   |   x    |     x      |             |         |
 
 Administrador (admin), Gestor (gestor), Almoxarife (almoxarife),
 Solicitante (solicitante), Auditor (auditor).
@@ -158,7 +182,7 @@ Solicitante (solicitante), Auditor (auditor).
 - superadmin pode tudo (can() devolve true) e continua reservado a
   superadmin@gmail.com: não aparece no dropdown e não pode ser alterado,
   removido nem ter a senha trocada por outra pessoa.
-- Todo cargo vê dashboard, materiais, estoque e fornecedores.
+- Todo cargo vê dashboard, materiais, estoque, fornecedores e patrimônio.
 - O cadastro de fornecedores (/fornecedores) é um só para a empresa, como
   o catálogo de materiais: fornecedores.gerenciar (só admin) cadastra,
   edita, desativa e reativa. Fornecedor não é apagado, só desativado
@@ -263,6 +287,39 @@ Situação (regras em services/site_create.go, checkSiteStatusChange):
 O almoxarifado central é criado pela migração, é único e fica sempre em
 andamento. Nome não pode repetir (sem diferenciar maiúsculas).
 Obra concluída é só consulta: não aceita entrada nem saída.
+
+
+PATRIMÔNIO
+
+/patrimonio?busca=texto&situacao=EM_USO|MANUTENCAO|BAIXADO|TODAS
+/patrimonio/{id}
+
+Ferramentas e equipamentos que não se gastam (betoneira, andaime). Ao
+contrário do material, cada bem é uma unidade com número próprio (a
+plaqueta) e está numa obra só. Tabelas: patrimonios e
+patrimonio_movimentacoes (histórico). No código Go o tipo é Asset.
+
+- A lista segue a obra do seletor do topo. Sem filtro, esconde os baixados;
+  TODAS traz também eles.
+- Cadastrar e editar número, nome e descrição: patrimonio.editar (admin).
+  O número é guardado em maiúsculas e é único para sempre, mesmo de bem
+  baixado.
+- Transferir e mudar situação: patrimonio.movimentar, só nos bens que estão
+  na obra da pessoa (canMoveAssetAt em authorization.go; admin em todas).
+- O formulário manda obra_atual (a obra do bem quando a tela abriu). Se o
+  bem mudou de obra desde então, a ação é recusada (ErrAssetMoved).
+- Destino da transferência não pode estar concluído; a origem pode (é de
+  obra encerrada que a ferramenta precisa sair). Bem baixado não é
+  transferido.
+
+Situação (regras em services/asset_service.go):
+- EM_USO     -> MANUTENCAO | BAIXADO
+- MANUTENCAO -> EM_USO | BAIXADO
+- BAIXADO    -> EM_USO (reativar: só com patrimonio.editar, ou seja, admin)
+- Dar baixa exige o motivo na observação.
+
+Todo cadastro, transferência, mudança de situação e edição (quando algo
+muda) gera uma linha no histórico, na mesma transação.
 
 
 SOLICITAÇÕES

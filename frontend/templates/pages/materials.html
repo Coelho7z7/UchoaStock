@@ -1,0 +1,179 @@
+{{ template "app" (layout . "materiais") }}
+
+{{ define "title" }}Materiais{{ end }}
+{{ define "body-class" }}materials-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">Catálogo</span>
+                        <h3>Materiais cadastrados</h3>
+                        <p>Busque, ordene e cadastre os materiais controlados no estoque.</p>
+                        <div class="page-hero-actions">
+                            {{ if .CanEditMaterial }}
+                            <button class="new-material-button" type="button" id="open-create-material">
+                                Novo material
+                            </button>
+                            {{ end }}
+                        </div>
+                    </div>
+                </header>
+
+                <nav class="materials-tabs" aria-label="Opções de materiais">
+                    <a class="material-tab-active" href="/materiais">Materiais</a>
+                    {{ if .CanEditMaterial }}<a href="/alterar-material">Alterar material</a>{{ end }}
+                    <a href="/estoque">Estoque</a>
+                </nav>
+
+                <form class="materials-filter" method="GET" action="/materiais" data-live-search>
+                    <input type="search" name="busca" value="{{ .Search }}" placeholder="Buscar material ou ID" aria-label="Buscar material">
+                    <select name="ordem" aria-label="Ordenar materiais">
+                        <option value="recentes" {{ if eq .Order "recentes" }}selected{{ end }}>Mais recentes</option>
+                        <option value="nome" {{ if eq .Order "nome" }}selected{{ end }}>Nome</option>
+                        <option value="estoque" {{ if eq .Order "estoque" }}selected{{ end }}>Estoque</option>
+                    </select>
+                    <button type="submit">Filtrar</button>
+                </form>
+
+                {{ if .Message }}
+                <p class="form-success" role="status">
+                    {{ .Message }}
+                </p>
+                {{ end }}
+
+                {{ if .Error }}
+                <p class="form-error" role="alert">
+                    {{ .Error }}
+                </p>
+                {{ end }}
+
+                <div class="materials-table page-table materials-list-table" data-live-region="tabela">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Material</th>
+                                <th>{{ if .Scope.Current }}Saldo na obra{{ else }}Saldo total{{ end }}</th>
+                                <th>Avisar em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {{ range .Materials }}
+
+                            <tr data-row-id="{{ .ID }}">
+                                <td>{{ .ID }}</td>
+                                <td>{{ .Name }}</td>
+                                <td>
+                                    <span class="stock-quantity {{ .StockStatus }}">{{ .FormattedQuantity }}</span><span class="unit-label">{{ .Unit }}</span>
+                                </td>
+                                <td class="minimum-cell">{{ .FormattedMinimum }} {{ .Unit }}</td>
+                                <td class="material-actions">
+                                    {{ if $.CanEditMaterial }}<a class="edit-material-link" href="/alterar-material?editar={{ .ID }}">Editar</a>{{ else }}<span class="muted-dash">—</span>{{ end }}
+                                </td>
+                            </tr>
+
+                            {{ else }}
+
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-table"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path></svg>{{ if $.Search }}<span>Nenhum material encontrado para essa busca.</span>{{ else }}<span>Nenhum material cadastrado.</span>{{ if $.CanEditMaterial }}<button type="button" class="empty-table-cta" data-open="create-material-modal">Cadastrar primeiro material</button>{{ end }}{{ end }}</div>
+                                </td>
+                            </tr>
+
+                            {{ end }}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div data-live-region="paginacao">
+                {{ if gt .TotalPages 1 }}
+
+                <div class="pagination">
+
+                    {{ if gt .Page 1 }}
+                    <a href="/materiais?pagina={{ .PreviousPage }}&ordem={{ .Order }}{{ if .Search }}&busca={{ .Search }}{{ end }}">« Anterior</a>
+                    {{ end }}
+
+                    <span>Página {{ .Page }} de {{ .TotalPages }}</span>
+
+                    {{ if lt .Page .TotalPages }}
+                    <a href="/materiais?pagina={{ .NextPage }}&ordem={{ .Order }}{{ if .Search }}&busca={{ .Search }}{{ end }}">Próxima »</a>
+                    {{ end }}
+
+                </div>
+
+                {{ end }}
+                </div>
+
+                <div
+                    class="modal-create"
+                    id="create-material-modal"
+                    hidden>
+
+                    <div
+                        class="modal-create-content"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="new-material-title">
+
+                        <div class="modal-create-header">
+
+                            <div>
+                                <span class="edit-kicker">Catálogo</span>
+                                <h3 id="new-material-title">Novo material</h3>
+                            </div>
+
+                            <button
+                                class="close-modal-button"
+                                type="button"
+                                id="close-create-material"
+                                aria-label="Fechar">
+                                &times;
+                            </button>
+
+                        </div>
+
+                        <form class="create-form" action="/materiais" method="POST">
+                            <input type="hidden" name="obra_id" value="{{ .Scope.SiteID }}">
+
+                            <label for="material-name">Nome do material</label>
+                            <input id="material-name" type="text" name="nome" value="{{ .Name }}" placeholder="Ex.: Cimento CP-II 50kg" required>
+
+                            <label for="material-unit">Unidade</label>
+                            <select id="material-unit" name="unidade">
+                                {{ range .Units }}<option value="{{ . }}"{{ if eq . $.Unit }} selected{{ end }}>{{ . }}</option>{{ end }}
+                            </select>
+
+                            <div class="form-row">
+                                <div>
+                                    <label for="material-quantity">Quantidade inicial</label>
+                                    <input id="material-quantity" type="text" inputmode="decimal" name="quantidade" value="{{ .Quantity }}" required>
+                                </div>
+                                <div>
+                                    <label for="material-minimum">Avisar quando chegar a</label>
+                                    <input id="material-minimum" type="text" inputmode="decimal" name="limite_minimo" value="{{ .Minimum }}" required>
+                                </div>
+                            </div>
+
+                            <small class="role-help">{{ with .TargetSite }}A quantidade inicial entra em <strong>{{ .Name }}</strong>. {{ end }}Aceita decimais com vírgula, como 2,5. O material aparece como "acabando" quando o saldo de uma obra chegar ao limite de aviso.</small>
+
+                            <button type="submit">Cadastrar material</button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </section>
+{{ end }}

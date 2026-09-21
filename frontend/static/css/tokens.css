@@ -1,0 +1,324 @@
+/* Design tokens do UchôaStock.
+
+/* ---------- Tipografia: Inter auto-hospedada ----------
+   Os arquivos ficam em frontend/static/css/fonts/, servidos em /css/fonts/
+   junto com o CSS (o caminho abaixo é relativo a este arquivo).
+   font-display: swap — o texto aparece na hora com a fonte do sistema
+   e troca quando a Inter chega; em obra, com rede ruim, isso evita
+   tela em branco. */
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('fonts/inter-400.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('fonts/inter-500.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('fonts/inter-600.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('fonts/inter-700.woff2') format('woff2');
+}
+
+:root {
+
+    /* Marca: o azul da logo da Uchôa. No fundo escuro o tom cheio serve
+       para preencher botão; texto e link usam o tom claro. */
+
+    --color-brand: #1E64BE;
+    --color-brand-strong: #17509A;
+    --color-brand-light: #8AC7FF;
+    /* contraste de 9.8:1 sobre o card (AAA): é o tom de texto e link */
+    --color-brand-soft: #4A8AD6;
+    --color-brand-tint: rgba(30, 100, 190, 0.16);
+    --color-brand-border: rgba(30, 100, 190, 0.38);
+
+    /* Superfícies. O sistema é de tema escuro, e os fundos são tons de
+       azul-marinho tirados do mesmo azul da logo, para tudo combinar com
+       a marca. */
+
+    --color-bg: #06101F;
+    --color-bg-gradient: radial-gradient(circle at 75% 0%, #10284D 0%, #06101F 48%, #040A15 100%);
+    --color-surface: #0E1B31;
+    --color-surface-alt: #122240;
+    --color-surface-hover: #182B4D;
+    --color-sidebar: #081529;
+    --color-sidebar-gradient: linear-gradient(180deg, #0B1C38 0%, #081529 100%);
+    --color-sidebar-hover: #182B4D;
+    --color-topbar: rgba(8, 21, 41, 0.88);
+    --color-overlay: rgba(2, 6, 14, 0.72);
+
+    /* Painel de apresentação do login: degradê do marinho até o azul da
+       marca, com uma malha de pontos por cima. */
+    --color-hero-gradient: linear-gradient(160deg, #081529 0%, #0B1E3E 55%, #15397A 100%);
+    --color-hero-dots: rgba(138, 199, 255, 0.12);
+
+    /* Faixas da marca: o desenho da logo, quatro linhas que sobem num
+       degrau em curva. A máscara dá só o formato (o preto dela não
+       aparece) e o fill dá a cor, de transparente até o azul da marca.
+       Separando as duas coisas, a cor continua vindo dos tokens e o mesmo
+       desenho serve no topo das telas, nos modais e nos cartões, sem
+       repetir SVG em cada template. */
+    --brand-waves-mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100'%3E%3Cg fill='none' stroke='%23000' stroke-width='10'%3E%3Cpath d='M0 26H636C660 26 664 14 688 14H800'/%3E%3Cpath d='M0 46H636C660 46 664 36 688 36H800'/%3E%3Cpath d='M0 66H636C660 66 664 58 688 58H800'/%3E%3Cpath d='M0 86H636C660 86 664 80 688 80H800'/%3E%3C/g%3E%3C/svg%3E");
+    --brand-waves-fill: linear-gradient(90deg, transparent 0%, var(--color-brand-border) 55%, var(--color-brand) 100%);
+
+    /* Texto. O número é o contraste sobre o card. */
+
+    --color-text: #E8F0FB;
+    /* 15.0:1, AAA */
+    --color-text-muted: #A9BCD6;
+    /* 8.9:1, AAA */
+    --color-text-subtle: #8FA5C4;
+    /* 6.8:1, AA */
+    --color-text-invert: #F8FBFF;
+    --color-text-sidebar: #CAD7EA;
+
+    /* Bordas, levemente azuladas em vez de cinza puro. */
+
+    --color-border: rgba(120, 160, 220, 0.16);
+    --color-border-strong: rgba(120, 160, 220, 0.30);
+    --color-border-dark: rgba(120, 160, 220, 0.16);
+
+    /* A borda de input precisa aparecer de verdade: a WCAG (1.4.11) pede
+       contraste de 3:1 para controles. As bordas de cima só separam
+       áreas e são decorativas, então não serviriam aqui. Esta tem 3.6:1
+       sobre o card. */
+    --color-border-input: #5B7499;
+
+    /* Cores de status (sucesso, erro, aviso). No tema escuro o texto usa
+       o tom claro, e o fundo é a mesma cor translúcida por cima do card. */
+
+    --color-success: #9FE3B0;
+    /* 11.6:1 sobre o card, AAA */
+    --color-success-tint: rgba(34, 197, 94, 0.16);
+    --color-success-text: #9FE3B0;
+    --color-success-solid: #16A34A;
+
+    --color-danger: #FCA5A5;
+    /* 9.1:1 sobre o card, AAA */
+    --color-danger-tint: rgba(220, 38, 38, 0.18);
+    --color-danger-text: #FCA5A5;
+    --color-danger-solid: #DC2626;
+    --color-danger-strong: #B91C1C;
+    /* hover do botão de confirmar remoção */
+
+    --color-warning: #FBBF62;
+    /* 10.4:1 sobre o card, AAA */
+    --color-warning-tint: rgba(217, 119, 6, 0.18);
+    --color-warning-text: #FBBF62;
+    --color-warning-solid: #D97706;
+
+    --color-info: var(--color-brand-light);
+    --color-info-tint: rgba(30, 100, 190, 0.16);
+    --color-info-text: #8AC7FF;
+
+    /* Dourado de destaque. */
+    --color-gold: #F5B942;
+    --color-gold-tint: rgba(245, 185, 66, 0.16);
+    --color-gold-border: rgba(245, 185, 66, 0.32);
+
+    /* Efeitos: o texto do botão azul e as camadas translúcidas das
+       animações (onda do clique, brilho, trilho do spinner, anel de foco
+       com erro). O número no nome dos brancos é a opacidade em %. */
+
+    --color-on-brand: #FFFFFF;
+    --color-white-8: rgba(255, 255, 255, 0.08);
+    --color-white-10: rgba(255, 255, 255, 0.10);
+    --color-white-18: rgba(255, 255, 255, 0.18);
+    --color-white-35: rgba(255, 255, 255, 0.35);
+    --color-white-45: rgba(255, 255, 255, 0.45);
+    --color-brand-shine: rgba(30, 100, 190, 0.18);
+    --color-brand-glow: rgba(30, 100, 190, 0.35);
+    --color-danger-ring: rgba(185, 28, 28, 0.22);
+
+    /* Azul da marca um pouco mais aceso, para o hover do botão principal:
+       em tema escuro, clarear dá mais sensação de resposta que escurecer.
+       Texto branco sobre ele: 4.7:1 — AA. */
+    --color-brand-bright: #2A74D0;
+    /* Brilho de cima para baixo por cima do botão principal: dá volume
+       sem mudar a cor de base (o hover troca só o background-color, e
+       por isso a transição continua suave). */
+    --gradient-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 60%);
+    /* Brilho que nasce do canto superior direito do cabeçalho de página,
+       do lado das faixas da marca. */
+    --gradient-hero-glow: radial-gradient(circle at 100% 0%, rgba(30, 100, 190, 0.18) 0%, rgba(30, 100, 190, 0) 55%);
+    --color-selection: rgba(74, 138, 214, 0.38);
+
+    /* ---------- Espaçamento: escala de 4px ----------
+       Substitui os 92 valores px soltos do CSS antigo. */
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    /* Meios-passos, só para ajuste fino de alinhamento (um texto de
+       apoio colado no de cima, um ícone descido 1px para alinhar com a
+       linha). Não servem para espaçar blocos. */
+    --space-px: 1px;
+    --space-half: 2px;
+
+    /* Tipografia: oito tamanhos fixos e dois fluidos. O 5xl e os
+       "display" são só para o título do login. */
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+    --text-xs: 11px;
+    --text-sm: 13px;
+    --text-base: 15px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+    --text-3xl: 34px;
+    --text-5xl: 52px;
+
+    /* Os fluidos usam clamp(mínimo, ideal, máximo): o valor do meio
+       acompanha a largura da tela (vw) e os outros dois seguram os
+       extremos. O "-sm" é do celular; o outro, do login lado a lado. */
+    --text-display-sm: clamp(28px, 8.4vw, 40px);
+    --text-display: clamp(40px, 4.2vw, 64px);
+
+    --weight-normal: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+
+    --leading-tight: 1.2;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.65;
+
+    --tracking-tight: -0.02em;
+    --tracking-wide: 0.08em;
+
+    /* Raios de borda */
+
+    --radius-xs: 3px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 999px;
+
+    /* Sombras. No fundo escuro uma sombra fraca não aparece, por isso
+       elas são mais fortes do que seriam num tema claro. */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.36);
+    --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.48);
+    --shadow-focus: 0 0 0 3px rgba(74, 138, 214, 0.45);
+    /* Filete de luz no topo de cartões e painéis. Em tema escuro é o que
+       separa a superfície do fundo com elegância: parece uma borda
+       iluminada de cima, não uma linha desenhada. Vai junto com a sombra. */
+    --shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    /* Halo azul do botão principal no hover. */
+    --shadow-brand: 0 8px 22px rgba(30, 100, 190, 0.38);
+    /* Sombra da topbar quando a página rola: marca que o conteúdo está
+       passando por baixo dela. */
+    --shadow-topbar: 0 10px 28px rgba(2, 6, 14, 0.45);
+
+    /* ---------- Movimento ----------
+       Três curvas, cada uma com um papel:
+       - out: desacelera no fim. Para o que entra na tela e para hover.
+       - emphasized: sai rápido e pousa devagar. Para modal, gaveta e
+         painel, que precisam parecer ter peso.
+       - spring: passa um pouco do ponto e volta. Só em detalhes
+         pequenos (ícone, selo): em peça grande, cansa. */
+
+    --ease-out: cubic-bezier(0.22, 0.8, 0.2, 1);
+    --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+    --duration-fast: 140ms;
+    --duration-base: 220ms;
+    --duration-slow: 400ms;
+    --duration-slower: 640ms;
+    /* Intervalo entre um item e o próximo numa entrada em cascata. */
+    --stagger-step: 55ms;
+
+    /* Camadas (z-index), todas aqui para ninguém inventar número solto.
+       A sidebar do celular fica acima do overlay, e o toast acima de
+       tudo. */
+
+    --z-sticky: 20;
+    --z-overlay: 900;
+    --z-sidebar: 950;
+    --z-modal: 1000;
+    --z-toast: 1100;
+
+    /* Medidas da estrutura da página */
+
+    --sidebar-width: 256px;
+    --topbar-height: 64px;
+
+    /* Tamanho mínimo de algo clicável. 44px é o que a WCAG recomenda, e
+       aqui tem motivo prático: o sistema é usado de luva, na obra. */
+    --touch-target: 44px;
+
+    /* ---------- Ícones ----------
+       Tamanho do desenho (o SVG), não da área de toque: botão de ícone
+       continua com --touch-target em volta. */
+
+    --icon-xs: 13px;
+    /* dentro de selos */
+    --icon-sm: 16px;
+    /* dentro de botões e o spinner */
+    --icon-md: 18px;
+    /* menu lateral, toast, campo de busca */
+    --icon-lg: 20px;
+    /* botões só de ícone, cartões do dashboard, botão do menu */
+    --icon-xl: 24px;
+    /* modais de confirmação */
+
+    /* ---------- Larguras de componente ---------- */
+
+    --toast-width: 380px;
+    --stock-qty-width: 96px;
+    --stock-note-width: 200px;
+}
+
+/* Breakpoints
+
+   Ficam aqui como comentário porque variável CSS não funciona dentro de
+   @media: lá precisa ser o número mesmo. Use sempre estes:
+
+     até 767px   celular (a base do CSS, tudo é escrito mobile-first)
+     768px       tablet: a sidebar deixa de ser gaveta e fica fixa. Esse
+                 número está amarrado ao window.innerWidth >= 768 do app.js
+     1024px      desktop: os grids ganham mais de uma coluna
+     1280px      telas largas: limita a largura das linhas de texto
+
+   Duas exceções, cada uma num componente só:
+     640px       o filtro de materiais já cabe em 3 colunas no celular
+                 em paisagem, antes do tablet
+     900px       o login só comporta hero + formulário lado a lado a
+                 partir daqui; em 768px o hero ficaria espremido
+
+   max-width só para o que EXISTE apenas no celular, e não para
+   corrigir o desktop. Hoje são dois casos, marcados com "Só no
+   celular" no comentário de cada bloco:
+     - a tabela que vira cartões (layout.css, e os ajustes de linha e
+       de ações em pages.css): no desktop ela é tabela de verdade, e
+       desfazer o cartão propriedade por propriedade seria mais frágil
+     - a entrada em cascata dos itens da gaveta do menu (layout.css):
+       do tablet em diante a sidebar é fixa e não abre               */

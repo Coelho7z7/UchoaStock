@@ -1,0 +1,119 @@
+{{ template "app" (layout . "patrimonio") }}
+
+{{ define "title" }}{{ .Asset.Number }} · {{ .Asset.Name }}{{ end }}
+{{ define "heading" }}Patrimônio{{ end }}
+{{ define "body-class" }}asset-detail-page{{ end }}
+
+{{ define "content" }}
+            <section class="content">
+
+                <header class="page-hero">
+                    <div class="page-hero-text">
+                        <span class="eyebrow">Patrimônio · {{ .Asset.SiteName }}</span>
+                        <h3>{{ .Asset.Name }}</h3>
+                        <p>{{ if .Asset.Description }}{{ .Asset.Description }}{{ else }}Sem descrição.{{ end }}</p>
+                        <span class="page-hero-meta"><span class="badge asset-status-{{ .Asset.Status }}">{{ .Asset.FormattedStatus }}</span> Nº {{ .Asset.Number }}</span>
+                    </div>
+                </header>
+
+                {{ if .Message }}
+                <p class="form-success" role="status">{{ .Message }}</p>
+                {{ end }}
+
+                {{ if .Error }}
+                <p class="form-error" role="alert">{{ .Error }}</p>
+                {{ end }}
+
+                {{ if .MoveElsewhere }}
+                <p class="scope-notice">Este bem está na obra {{ .Asset.SiteName }}. Só quem atua nela pode transferir ou mudar a situação dele.</p>
+                {{ else if and .CanMove (eq .Asset.Status "BAIXADO") (not .NextStatuses) }}
+                <p class="scope-notice">Bem baixado: fica só para consulta e histórico. Só o administrador pode reativá-lo.</p>
+                {{ end }}
+
+                <dl class="request-info">
+                    <div><dt>Nº de patrimônio</dt><dd><span class="asset-number">{{ .Asset.Number }}</span></dd></div>
+                    <div><dt>Obra atual</dt><dd>{{ .Asset.SiteName }}</dd></div>
+                    <div><dt>Situação</dt><dd><span class="badge asset-status-{{ .Asset.Status }}">{{ .Asset.FormattedStatus }}</span></dd></div>
+                    <div><dt>Cadastrado em</dt><dd>{{ .Asset.CreatedAt }}</dd></div>
+                </dl>
+
+                {{ if or .CanMove .CanEdit }}
+                <div class="asset-actions">
+
+                    {{ if and .CanMove (ne .Asset.Status "BAIXADO") }}
+                    <form class="create-form asset-action-card" method="POST" action="/patrimonio/{{ .Asset.ID }}">
+                        <h4>Transferir</h4>
+                        <input type="hidden" name="acao" value="transferir">
+                        <input type="hidden" name="obra_atual" value="{{ .Asset.SiteID }}">
+                        <label for="transfer-site">Para a obra</label>
+                        <select id="transfer-site" name="obra_destino" required>
+                            <option value="">Escolha a obra</option>
+                            {{ range .Scope.Sites }}{{ if and (ne .Status "CONCLUIDA") (ne .ID $.Asset.SiteID) }}<option value="{{ .ID }}"{{ if eq .ID $.Form.SiteID }} selected{{ end }}>{{ .Name }}</option>{{ end }}{{ end }}
+                        </select>
+                        <label for="transfer-note">Observação <small>(opcional)</small></label>
+                        <textarea id="transfer-note" name="observacao" maxlength="300" rows="2" placeholder="Ex.: levada no caminhão da manhã">{{ if eq .Form.Action "transferir" }}{{ .Form.Note }}{{ end }}</textarea>
+                        <button class="save-button" type="submit"
+                            data-confirm="Transferir &quot;{{ .Asset.Name }}&quot; ({{ .Asset.Number }}) para a obra escolhida? A transferência fica no histórico."
+                            data-confirm-title="Transferir bem" data-confirm-ok="Transferir" data-confirm-tone="warning">Transferir</button>
+                    </form>
+                    {{ end }}
+
+                    {{ if and .CanMove .NextStatuses }}
+                    <form class="create-form asset-action-card" method="POST" action="/patrimonio/{{ .Asset.ID }}">
+                        <h4>Mudar situação</h4>
+                        <input type="hidden" name="acao" value="situacao">
+                        <input type="hidden" name="obra_atual" value="{{ .Asset.SiteID }}">
+                        <label for="status-select">Nova situação</label>
+                        <select id="status-select" name="situacao" required>
+                            {{ range .NextStatuses }}<option value="{{ .Value }}"{{ if eq .Value $.Form.Status }} selected{{ end }}>{{ if and (eq $.Asset.Status "BAIXADO") (eq .Value "EM_USO") }}Reativar (em uso){{ else }}{{ .Label }}{{ end }}</option>{{ end }}
+                        </select>
+                        <label for="status-note">Observação <small>(obrigatória para dar baixa)</small></label>
+                        <textarea id="status-note" name="observacao" maxlength="300" rows="2" placeholder="Ex.: motor queimado, enviada para a assistência">{{ if eq .Form.Action "situacao" }}{{ .Form.Note }}{{ end }}</textarea>
+                        <button class="save-button" type="submit"
+                            data-confirm="Mudar a situação de &quot;{{ .Asset.Name }}&quot; ({{ .Asset.Number }})? Bem baixado fica só para consulta."
+                            data-confirm-title="Mudar situação" data-confirm-ok="Confirmar" data-confirm-tone="warning">Salvar situação</button>
+                    </form>
+                    {{ end }}
+
+                    {{ if .CanEdit }}
+                    <form class="create-form asset-action-card" method="POST" action="/patrimonio/{{ .Asset.ID }}">
+                        <h4>Editar dados</h4>
+                        <input type="hidden" name="acao" value="editar">
+                        <label for="edit-number">Nº de patrimônio</label>
+                        <input id="edit-number" type="text" name="numero" maxlength="30" value="{{ .Form.Number }}" required>
+                        <label for="edit-name">Nome</label>
+                        <input id="edit-name" type="text" name="nome" maxlength="100" value="{{ .Form.Name }}" required>
+                        <label for="edit-description">Descrição</label>
+                        <textarea id="edit-description" name="descricao" maxlength="300" rows="2">{{ .Form.Description }}</textarea>
+                        <button class="save-button" type="submit">Salvar dados</button>
+                    </form>
+                    {{ end }}
+
+                </div>
+                {{ end }}
+
+                <div class="materials-section request-history-section">
+
+                    <div class="section-header">
+                        <h3>Histórico</h3>
+                    </div>
+
+                    <ol class="request-history">
+                        {{ range .Events }}
+                        <li class="request-event asset-event-{{ .Action }}">
+                            <span class="request-event-when">{{ .CreatedAt }}</span>
+                            <span><strong>{{ .UserName }}</strong> · {{ .FormattedAction }}</span>
+                            {{ if eq .Action "CADASTRO" }}<span class="request-event-detail">Na obra {{ .ToSiteName }}</span>{{ end }}
+                            {{ if eq .Action "TRANSFERENCIA" }}<span class="request-event-detail">{{ .FromSiteName }} → {{ .ToSiteName }}</span>{{ end }}
+                            {{ if eq .Action "SITUACAO" }}<span class="request-event-detail">Passou para: {{ .FormattedStatus }}</span>{{ end }}
+                            {{ if .Note }}<span class="request-event-detail">{{ .Note }}</span>{{ end }}
+                        </li>
+                        {{ end }}
+                    </ol>
+
+                </div>
+
+                <p><a class="edit-material-link" href="/patrimonio">← Voltar para o patrimônio</a></p>
+
+            </section>
+{{ end }}
