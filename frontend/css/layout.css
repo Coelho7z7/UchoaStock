@@ -38,13 +38,41 @@
     box-shadow: var(--shadow-lg);
     transform: translateX(-105%);
     visibility: hidden;
-    transition: transform var(--duration-base) var(--ease-out),
-        visibility var(--duration-base);
+    transition: transform var(--duration-slow) var(--ease-emphasized),
+        visibility var(--duration-slow);
 }
 
 body.mobile-menu-open .sidebar {
     transform: translateX(0);
     visibility: visible;
+}
+
+/* Com a gaveta abrindo, os itens do menu chegam um atrás do outro,
+   acompanhando o painel. Só no celular: no tablet em diante a barra é
+   fixa e não "abre". backwards (e não both) de propósito: terminada a
+   animação, nada dela fica valendo no item. */
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+
+    body.mobile-menu-open .sidebar nav a {
+        animation: drawer-item-in var(--duration-slow) var(--ease-emphasized) backwards;
+        animation-delay: calc(80ms + var(--nav-i, 8) * 30ms);
+    }
+
+    .sidebar nav a:nth-child(1) { --nav-i: 0; }
+    .sidebar nav a:nth-child(2) { --nav-i: 1; }
+    .sidebar nav a:nth-child(3) { --nav-i: 2; }
+    .sidebar nav a:nth-child(4) { --nav-i: 3; }
+    .sidebar nav a:nth-child(5) { --nav-i: 4; }
+    .sidebar nav a:nth-child(6) { --nav-i: 5; }
+    .sidebar nav a:nth-child(7) { --nav-i: 6; }
+    .sidebar nav a:nth-child(8) { --nav-i: 7; }
+}
+
+@keyframes drawer-item-in {
+    from {
+        opacity: 0;
+        transform: translateX(-12px);
+    }
 }
 
 /* ---------- Marca ----------
@@ -112,9 +140,15 @@ body.mobile-menu-open .sidebar {
     color: var(--color-text-sidebar);
     border-radius: var(--radius-md);
     text-decoration: none;
-    transition: background var(--duration-fast) ease,
-        color var(--duration-fast) ease,
-        transform var(--duration-fast) ease;
+    transition: background var(--duration-base) var(--ease-out),
+        color var(--duration-base) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
+}
+
+.sidebar nav a .nav-icon {
+    transition: color var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-spring);
 }
 
 /* Brilho que atravessa o item ao passar o mouse, com um leve empurrao
@@ -163,13 +197,26 @@ body.mobile-menu-open .sidebar {
     color: var(--color-text-invert);
     background: var(--color-sidebar-hover);
     text-decoration: none;
-    transform: translateX(4px);
     box-shadow: inset 0 0 0 1px var(--color-brand-border);
 }
 
-.sidebar nav a:hover::after {
-    opacity: 1;
-    animation: nav-sheen 650ms ease both;
+/* O empurrão, o brilho que atravessa e o ícone que cresce só onde há
+   mouse de verdade. No celular o toque deixava o item "preso" no estado
+   de hover, deslocado para a direita, até tocar em outro lugar. */
+@media (hover: hover) {
+
+    .sidebar nav a:hover {
+        transform: translateX(3px);
+    }
+
+    .sidebar nav a:hover .nav-icon {
+        transform: scale(1.1);
+    }
+
+    .sidebar nav a:hover::after {
+        opacity: 1;
+        animation: nav-sheen 650ms ease both;
+    }
 }
 
 @keyframes nav-sheen {
@@ -182,7 +229,7 @@ body.mobile-menu-open .sidebar {
    para ficar óbvio mesmo de relance e sem depender só de cor. */
 .sidebar nav a.tab-active {
     color: var(--color-text-invert);
-    background: var(--color-brand-tint);
+    background: linear-gradient(90deg, var(--color-brand-tint), transparent), var(--color-brand-tint);
     box-shadow: inset 0 0 0 1px var(--color-brand-border);
     font-weight: var(--weight-semibold);
 }
@@ -197,6 +244,23 @@ body.mobile-menu-open .sidebar {
     margin-top: -11px;
     background: var(--color-brand-soft);
     border-radius: 0 var(--radius-full) var(--radius-full) 0;
+    box-shadow: 0 0 10px var(--color-brand-glow);
+}
+
+/* A barrinha da página ativa cresce do centro quando a tela abre: um
+   sinal discreto de "você chegou aqui". */
+@media (prefers-reduced-motion: no-preference) {
+
+    .sidebar nav a.tab-active::before {
+        animation: nav-indicator-in var(--duration-slow) var(--ease-spring) 120ms backwards;
+    }
+}
+
+@keyframes nav-indicator-in {
+    from {
+        transform: scaleY(0);
+        opacity: 0;
+    }
 }
 
 .sidebar nav a.tab-active .nav-icon {
@@ -272,13 +336,13 @@ body.mobile-menu-open .sidebar {
     inset: 0;
     z-index: var(--z-overlay);
     background: var(--color-overlay);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity var(--duration-base) ease,
-        visibility var(--duration-base) ease;
+    transition: opacity var(--duration-slow) var(--ease-emphasized),
+        visibility var(--duration-slow);
 }
 
 body.mobile-menu-open .mobile-sidebar-overlay {
@@ -296,21 +360,51 @@ body.mobile-menu-open {
    Conteúdo
    ============================================================ */
 
-/* A pagina entra subindo de leve — o app.js ja faz isso no bloco de
-   conteudo, e aqui o shell inteiro acompanha. */
+/* O shell não se anima: quem entra são os blocos do conteúdo, logo
+   abaixo. Antes o .main-content subia com "animation ... both" em cima de
+   transform, e isso fazia dele o ponto de referência de todo
+   position: fixed lá dentro — os modais, que moram no conteúdo, deixavam
+   de cobrir a barra lateral. */
 .main-content {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     background: transparent;
-    animation: page-entrada 420ms var(--ease-out) both;
 }
 
-@keyframes page-entrada {
+/* ---------- Entrada da página ----------
+   Cada bloco do conteúdo (cabeçalho, abas, filtro, avisos, tabela) sobe
+   um pouco depois do anterior. Só CSS: começa na primeira pintura, sem
+   esperar o JS e sem a piscada de "aparece, some, volta" que a versão em
+   JS tinha.
+
+   fill-mode backwards: durante a espera o bloco fica no quadro inicial
+   (invisível) e, terminada a animação, ela não deixa transform nenhum
+   valendo. Com forwards/both o bloco guardaria um transform e prenderia
+   os position: fixed de dentro (o mesmo problema do .main-content).
+   Os modais ficam de fora: eles têm a própria entrada, a cada abertura. */
+@media (prefers-reduced-motion: no-preference) {
+
+    .content > :not(.modal-create):not(.modal-edit),
+    .access-denied-card {
+        animation: page-block-in var(--duration-slower) var(--ease-emphasized) backwards;
+        animation-delay: calc(var(--block-i, 6) * var(--stagger-step));
+    }
+
+    .content > :nth-child(1) { --block-i: 0; }
+    .content > :nth-child(2) { --block-i: 1; }
+    .content > :nth-child(3) { --block-i: 2; }
+    .content > :nth-child(4) { --block-i: 3; }
+    .content > :nth-child(5) { --block-i: 4; }
+    .content > :nth-child(6) { --block-i: 5; }
+    .access-denied-card { --block-i: 0; }
+}
+
+@keyframes page-block-in {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(14px);
     }
 }
 
@@ -327,9 +421,18 @@ body.mobile-menu-open {
     min-height: var(--topbar-height);
     padding: var(--space-3) var(--space-4);
     background: var(--color-topbar);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
     border-bottom: 1px solid var(--color-border);
+    transition: box-shadow var(--duration-slow) var(--ease-out),
+        border-color var(--duration-slow) var(--ease-out);
+}
+
+/* Página rolada (o app.js liga .gs-scrolled no body): a topbar ganha
+   sombra e borda mais firme, mostrando que o conteúdo passa por baixo. */
+body.gs-scrolled .topbar {
+    border-bottom-color: var(--color-border-strong);
+    box-shadow: var(--shadow-topbar);
 }
 
 .topbar h2 {

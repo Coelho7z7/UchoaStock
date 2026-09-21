@@ -219,19 +219,66 @@ function initAnimations() {
     enableDeleteConfirmation();
     enableToasts();
     enableSearchHighlightFromUrl();
+    // Estas duas não são animação, são estado: valem mesmo para quem
+    // pediu menos movimento.
+    enableTopbarShadow();
+    enableBackForwardRestore();
 
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (prefersReducedMotion()) {
         return;
     }
 
+    // A entrada do conteúdo (antes animateContentEntrance) é CSS puro
+    // agora, em layout.css: começa na primeira pintura, sem piscar.
     enableClickRipple();
     enablePageTransition();
-    animateContentEntrance();
     animateRowsCascade();
     animateCards();
     animateCounters();
     animateModalClosing();
     animateLoginError();
+}
+
+// Quem pediu ao sistema operacional para reduzir animações. O CSS trata o
+// que é dele (ver base.css); isto é para o que o JS anima.
+function prefersReducedMotion() {
+    return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+// Liga .gs-scrolled no body quando a página sai do topo: a topbar ganha
+// sombra (layout.css). O requestAnimationFrame junta vários eventos de
+// rolagem num só por quadro, e { passive: true } avisa o navegador de
+// que a rolagem nunca é cancelada aqui — ela não precisa esperar o JS.
+function enableTopbarShadow() {
+    if (!document.querySelector(".topbar")) return;
+
+    let pending = false;
+    const sync = function () {
+        pending = false;
+        document.body.classList.toggle("gs-scrolled", window.scrollY > 4);
+    };
+
+    window.addEventListener("scroll", function () {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(sync);
+    }, { passive: true });
+    sync();
+}
+
+// Voltar e avançar do navegador podem restaurar a página de um cache em
+// memória (bfcache), exatamente como ela estava ao sair: com o conteúdo
+// sumido (gs-leaving) e o botão girando (gs-loading). Sem isto, voltar
+// para a tela anterior mostrava uma página vazia. "persisted" é true só
+// quando a página veio desse cache.
+function enableBackForwardRestore() {
+    window.addEventListener("pageshow", function (event) {
+        if (!event.persisted) return;
+        document.body.classList.remove("gs-leaving");
+        document.querySelectorAll(".gs-loading").forEach(function (button) {
+            button.classList.remove("gs-loading");
+        });
+    });
 }
 
 // Tira acentos e deixa minúsculo, para a busca achar "Maceió" digitando
@@ -451,11 +498,22 @@ function enableLiveSearch() {
 
             if (controller) controller.abort();
             controller = new AbortController();
+            // O desta busca. controller muda quando outra começa; comparar os
+            // dois diz, no fim, se ainda há uma busca mais nova pendente.
+            const current = controller;
             form.setAttribute("aria-busy", "true");
+            // A tabela atual esmaece enquanto a nova não chega (components.css).
+            document.querySelectorAll("[data-live-region]").forEach(function (region) {
+                region.classList.add("gs-refreshing");
+            });
 
             fetch(url, { signal: controller.signal })
                 .then(function (response) { return response.text(); })
                 .then(function (html) {
+                    // O abort só cancela o que ainda está na rede. Se esta
+                    // resposta já tinha chegado quando outra busca começou,
+                    // ela é velha: não pode sobrescrever a mais nova.
+                    if (current !== controller) return;
                     const fresh = new DOMParser().parseFromString(html, "text/html");
                     const regions = document.querySelectorAll("[data-live-region]");
                     const replacements = Array.from(regions).map(function (region) {
@@ -469,8 +527,14 @@ function enableLiveSearch() {
                         return;
                     }
 
+                    const animate = !prefersReducedMotion();
                     regions.forEach(function (region, index) {
-                        region.replaceWith(document.importNode(replacements[index], true));
+                        const incoming = document.importNode(replacements[index], true);
+                        if (animate) {
+                            incoming.classList.add("gs-region-in");
+                            animateRowsCascade(incoming);
+                        }
+                        region.replaceWith(incoming);
                     });
                     // A URL acompanha a busca: F5 ou compartilhar o link mantém o filtro.
                     history.replaceState(null, "", url);
@@ -488,7 +552,13 @@ function enableLiveSearch() {
                     window.location.href = url;
                 })
                 .finally(function () {
+                    // Busca cancelada por outra mais nova: a tela continua
+                    // "ocupada" e esmaecida, esperando a resposta da nova.
+                    if (current !== controller) return;
                     form.removeAttribute("aria-busy");
+                    document.querySelectorAll("[data-live-region].gs-refreshing").forEach(function (region) {
+                        region.classList.remove("gs-refreshing");
+                    });
                 });
         };
 
@@ -525,24 +595,16 @@ function enableAutoSubmitSelects() {
     });
 }
 
-// Revela suavemente o bloco principal da página (conteúdo interno,
-// tela de acesso negado ou o formulário de login).
-function animateContentEntrance() {
-    const target = document.querySelector(".content, .access-denied-card, .login-form-side");
-    if (!target) return;
-
-    target.classList.add("gs-enter");
-    requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-            target.classList.add("gs-visible");
-        });
-    });
-}
+// A cascata para no 12º item: dali em diante tudo entra junto com ele.
+// Sem o teto, numa tabela de 50 linhas a última esperava mais de 2
+// segundos — e quem está procurando algo lá embaixo esperava junto.
+const CASCADE_LIMIT = 12;
 
 // Faz as linhas de tabela aparecerem em cascata, uma logo após a outra.
-function animateRowsCascade() {
-    document.querySelectorAll(".content table tbody tr").forEach(function (row, index) {
-        row.style.setProperty("--gs-i", index);
+// root permite repetir só na região trocada pela busca em tempo real.
+function animateRowsCascade(root) {
+    (root || document).querySelectorAll(".content table tbody tr, [data-live-region] tbody tr").forEach(function (row, index) {
+        row.style.setProperty("--gs-i", Math.min(index, CASCADE_LIMIT));
         row.classList.add("gs-row");
     });
 }
@@ -550,7 +612,7 @@ function animateRowsCascade() {
 // Aplica o mesmo efeito de cascata aos cartões do dashboard.
 function animateCards() {
     document.querySelectorAll(".cards .card").forEach(function (card, index) {
-        card.style.setProperty("--gs-i", index);
+        card.style.setProperty("--gs-i", Math.min(index, CASCADE_LIMIT));
         card.classList.add("gs-row");
     });
 }
@@ -658,7 +720,14 @@ function animateCounters() {
 
 // Faz a página desaparecer suavemente antes de navegar para outra tela
 // (menu lateral, paginação, sair), em vez de trocar de tela de golpe.
+//
+// Navegador com View Transitions entre páginas (CSSViewTransitionRule
+// existe) já faz isso sozinho, pelo @view-transition de base.css — e
+// melhor: a barra lateral fica parada e não há atraso nenhum no clique.
+// Aí este fade manual sobraria, e somaria 160 ms a cada navegação.
 function enablePageTransition() {
+    if (window.CSSViewTransitionRule) return;
+
     const linkSelectors = ".sidebar nav a, .pagination a, .sidebar-logout, .sidebar-account";
 
     document.addEventListener("click", function (event) {
@@ -667,6 +736,10 @@ function enablePageTransition() {
         if (event.defaultPrevented || event.button !== 0) return;
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         if (link.target === "_blank") return;
+
+        // Link para a própria página (a aba já ativa) não tem para onde
+        // sair: o fade só faria a tela piscar.
+        if (link.href === window.location.href) return;
 
         event.preventDefault();
         document.body.classList.add("gs-leaving");
@@ -862,16 +935,25 @@ function enableToasts() {
         const toast = document.createElement("div");
         toast.className = "gs-toast " + (isError ? "gs-toast-error" : "gs-toast-success");
         toast.setAttribute("role", isError ? "alert" : "status");
+        // Erro fica mais tempo: costuma pedir que a pessoa leia e corrija.
+        const duration = isError ? 6000 : 4200;
+        toast.style.setProperty("--gs-toast-duration", duration + "ms");
         toast.innerHTML =
             '<span class="gs-toast-icon" aria-hidden="true">' + (isError ? errorIcon : successIcon) + "</span>" +
             '<span class="gs-toast-text"></span>' +
-            '<button type="button" class="gs-toast-close" aria-label="Fechar">&times;</button>';
+            '<button type="button" class="gs-toast-close" aria-label="Fechar">&times;</button>' +
+            '<span class="gs-toast-progress" aria-hidden="true"></span>';
         toast.querySelector(".gs-toast-text").textContent = text;
 
         container.appendChild(toast);
         requestAnimationFrame(function () { toast.classList.add("gs-toast-visible"); });
 
+        // O relógio anda junto com a barra de tempo (components.css): mouse
+        // em cima pausa os dois, e ao sair continua de onde parou. Antes o
+        // aviso ganhava sempre 2,5 s novos, e a barra ficaria mentindo.
         let timer;
+        let remaining = duration;
+        let startedAt = Date.now();
         const remove = function () {
             clearTimeout(timer);
             toast.classList.remove("gs-toast-visible");
@@ -880,9 +962,15 @@ function enableToasts() {
         };
 
         toast.querySelector(".gs-toast-close").addEventListener("click", remove);
-        toast.addEventListener("mouseenter", function () { clearTimeout(timer); });
-        toast.addEventListener("mouseleave", function () { timer = setTimeout(remove, 2500); });
-        timer = setTimeout(remove, isError ? 6000 : 4200);
+        toast.addEventListener("mouseenter", function () {
+            clearTimeout(timer);
+            remaining = Math.max(remaining - (Date.now() - startedAt), 0);
+        });
+        toast.addEventListener("mouseleave", function () {
+            startedAt = Date.now();
+            timer = setTimeout(remove, remaining);
+        });
+        timer = setTimeout(remove, duration);
     });
 }
 

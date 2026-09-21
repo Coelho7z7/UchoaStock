@@ -44,6 +44,20 @@ h4 {
     color: var(--color-text);
 }
 
+/* balance: o navegador distribui as palavras entre as linhas para o
+   título não terminar com uma palavra sozinha embaixo. pretty faz o
+   mesmo, mais leve, nos parágrafos. Navegador que não conhece ignora. */
+h1,
+h2,
+h3,
+h4 {
+    text-wrap: balance;
+}
+
+p {
+    text-wrap: pretty;
+}
+
 h1 {
     font-size: var(--text-2xl);
 }
@@ -160,6 +174,13 @@ table {
     outline: none;
 }
 
+/* Texto selecionado no azul da marca, no lugar do azul padrão do sistema
+   operacional, que briga com o tema. */
+::selection {
+    color: var(--color-text-invert);
+    background: var(--color-selection);
+}
+
 /* Conteúdo lido por leitor de tela mas invisível na tela. */
 .sr-only {
     position: absolute;
@@ -206,6 +227,48 @@ table {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+}
+
+/* ---------- Transição entre páginas ----------
+   View Transitions entre documentos: ao navegar de uma tela para outra
+   (menu, paginação, envio de formulário), o navegador tira uma foto da
+   tela velha e faz o fade para a nova, sem a piscada branca do
+   carregamento. A barra lateral ganha nome próprio: vira uma camada à
+   parte, que é igual nas duas telas e por isso fica parada — só o
+   conteúdo troca.
+
+   Navegador sem suporte ignora o bloco inteiro, e o app.js usa o fade
+   antigo (ver enablePageTransition). Quem pediu menos movimento no
+   sistema não recebe nenhum dos dois. */
+@media (prefers-reduced-motion: no-preference) {
+
+    @view-transition {
+        navigation: auto;
+    }
+
+    .sidebar {
+        view-transition-name: sidebar;
+    }
+
+    ::view-transition-old(root) {
+        animation: vt-fade-out var(--duration-fast) ease both;
+    }
+
+    ::view-transition-new(root) {
+        animation: vt-fade-in var(--duration-base) var(--ease-out) both;
+    }
+}
+
+@keyframes vt-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes vt-fade-in {
+    from {
+        opacity: 0;
     }
 }
 

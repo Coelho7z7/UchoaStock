@@ -33,34 +33,57 @@ button:where([type="submit"]),
     font-weight: var(--weight-semibold);
     line-height: 1;
     color: var(--color-on-brand);
-    background: var(--color-brand);
+    background-color: var(--color-brand);
+    background-image: var(--gradient-sheen);
     border: 1px solid transparent;
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-highlight), var(--shadow-sm);
     text-decoration: none;
     white-space: nowrap;
     position: relative;
     overflow: hidden;
-    transition: background var(--duration-fast) ease,
-        box-shadow var(--duration-fast) ease,
-        transform var(--duration-fast) ease;
+    transition: background-color var(--duration-base) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
 }
 
+/* O hover troca só o background-color: o brilho de cima (background-image)
+   continua por cima, e a cor muda com transição suave — gradiente não
+   anima, cor sólida anima. */
 .button:hover,
 button:where([type="submit"]):hover,
 .new-material-button:hover,
 .save-button:hover,
 .empty-table-cta:hover {
-    background: var(--color-brand-strong);
+    background-color: var(--color-brand-bright);
     color: var(--color-on-brand);
     text-decoration: none;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-highlight), var(--shadow-brand);
 }
 
+/* Levantar só com mouse: no toque o botão ficaria suspenso depois de
+   solto. */
+@media (hover: hover) {
+
+    .button:hover,
+    button:where([type="submit"]):hover,
+    .new-material-button:hover,
+    .save-button:hover,
+    .empty-table-cta:hover {
+        transform: translateY(-1px);
+    }
+}
+
+/* Pressionar afunda o botão de leve. Duração curta: a resposta ao dedo
+   tem de ser imediata. */
 .button:active,
 button:where([type="submit"]):active,
 .new-material-button:active,
-.save-button:active {
-    transform: translateY(1px);
+.save-button:active,
+.empty-table-cta:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: var(--shadow-highlight), var(--shadow-sm);
+    transition-duration: var(--duration-fast);
 }
 
 /* Secundário: ação disponível, mas que não é a principal da tela. */
@@ -84,8 +107,10 @@ button:where([type="submit"]):active,
     white-space: nowrap;
     position: relative;
     overflow: hidden;
-    transition: background var(--duration-fast) ease,
-        border-color var(--duration-fast) ease;
+    transition: background var(--duration-base) var(--ease-out),
+        border-color var(--duration-base) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
 }
 
 .button-secondary:hover,
@@ -96,6 +121,24 @@ button:where([type="submit"]):active,
     border-color: var(--color-text-subtle);
     color: var(--color-text);
     text-decoration: none;
+    box-shadow: var(--shadow-sm);
+}
+
+@media (hover: hover) {
+
+    .button-secondary:hover,
+    .edit-material-button:hover,
+    .edit-material-link:hover {
+        transform: translateY(-1px);
+    }
+}
+
+.button-secondary:active,
+.edit-material-button:active,
+.edit-material-link:active,
+.close-modal-button:active {
+    transform: scale(0.97);
+    transition-duration: var(--duration-fast);
 }
 
 /* Destrutivo: remover material, remover usuário. */
@@ -118,8 +161,9 @@ button:where([type="submit"]):active,
     white-space: nowrap;
     position: relative;
     overflow: hidden;
-    transition: background var(--duration-fast) ease,
-        color var(--duration-fast) ease;
+    transition: background var(--duration-base) var(--ease-out),
+        color var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
 }
 
 .button-danger:hover,
@@ -128,6 +172,14 @@ button:where([type="submit"]):active,
 .delete-user-button:hover {
     color: var(--color-text-invert);
     background: var(--color-danger-solid);
+}
+
+.button-danger:active,
+.delete-button:active,
+.delete-material-button:active,
+.delete-user-button:active {
+    transform: scale(0.97);
+    transition-duration: var(--duration-fast);
 }
 
 /* Ícone dentro de botão. Sem tamanho explícito o SVG assume o padrão
@@ -190,8 +242,9 @@ textarea {
        componentes de interface, que a borda cinza-clara não cumpria. */
     border: 1px solid var(--color-border-input);
     border-radius: var(--radius-md);
-    transition: border-color var(--duration-fast) ease,
-        box-shadow var(--duration-fast) ease;
+    transition: border-color var(--duration-base) var(--ease-out),
+        box-shadow var(--duration-base) var(--ease-out),
+        background-color var(--duration-base) var(--ease-out);
 }
 
 input:hover,
@@ -200,11 +253,14 @@ textarea:hover {
     border-color: var(--color-text-subtle);
 }
 
+/* No foco o campo também clareia um tom: o anel azul diz "é aqui", e o
+   fundo diz "está pronto para digitar". */
 input:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--color-brand);
+    border-color: var(--color-brand-soft);
+    background-color: var(--color-surface-hover);
     box-shadow: var(--shadow-focus);
 }
 
@@ -295,11 +351,23 @@ select {
     background: var(--color-surface);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-highlight), var(--shadow-lg);
+    transform-origin: top center;
+    animation: gs-pop-in var(--duration-base) var(--ease-emphasized);
 }
 
 .gs-combobox-panel[hidden] {
     display: none;
+}
+
+/* Painel que abre a partir do botão: cresce do topo, já quase no
+   tamanho final. A animação roda a cada abertura porque o painel sai de
+   display: none. */
+@keyframes gs-pop-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
 }
 
 /* Dentro de modal a lista abre no fluxo, empurrando o resto: o conteúdo
@@ -332,8 +400,10 @@ select {
     color: var(--color-text);
     border-radius: var(--radius-sm);
     cursor: pointer;
+    transition: background var(--duration-fast) ease;
 }
 
+.gs-combobox-list li:hover,
 .gs-combobox-list li.gs-combobox-active {
     background: var(--color-surface-hover);
 }
@@ -474,14 +544,27 @@ input.form-error:focus {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--duration-base) var(--ease-out),
-        box-shadow var(--duration-base) ease;
+    box-shadow: var(--shadow-highlight), var(--shadow-sm);
+    transition: transform var(--duration-slow) var(--ease-emphasized),
+        box-shadow var(--duration-slow) var(--ease-emphasized),
+        border-color var(--duration-slow) var(--ease-emphasized);
 }
 
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
+.card-icon {
+    transition: transform var(--duration-slow) var(--ease-spring);
+}
+
+@media (hover: hover) {
+
+    .card:hover {
+        transform: translateY(-3px);
+        border-color: var(--color-brand-border);
+        box-shadow: var(--shadow-highlight), var(--shadow-lg);
+    }
+
+    .card:hover .card-icon {
+        transform: scale(1.08) rotate(-3deg);
+    }
 }
 
 .card-icon {
@@ -513,12 +596,15 @@ input.form-error:focus {
     color: var(--color-text-muted);
 }
 
+/* tabular-nums: todo algarismo com a mesma largura. Sem isso o número
+   "tremia" de lado enquanto a contagem animada subia de 0 ao valor. */
 .card strong {
     margin-top: var(--space-1);
     font-size: var(--text-2xl);
     font-weight: var(--weight-bold);
     color: var(--color-text);
     letter-spacing: var(--tracking-tight);
+    font-variant-numeric: tabular-nums;
 }
 
 .card small {
@@ -589,7 +675,7 @@ input.form-error:focus {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-highlight), var(--shadow-sm);
 }
 
 .section-header {
@@ -654,10 +740,11 @@ input.form-error:focus {
     padding: calc(var(--band-height) + var(--space-5)) var(--space-5) var(--space-5);
     background:
         linear-gradient(var(--color-border), var(--color-border)) 0 var(--band-height) / 100% 1px no-repeat,
+        var(--gradient-hero-glow),
         var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-highlight), var(--shadow-md);
 }
 
 /* A tarja em si. Quem usa define --band-height (a altura dela). */
@@ -676,6 +763,34 @@ input.form-error:focus {
     background: var(--brand-waves-fill);
     -webkit-mask: var(--brand-waves-mask) right center / auto 100% no-repeat;
     mask: var(--brand-waves-mask) right center / auto 100% no-repeat;
+}
+
+/* As faixas se desenham da esquerda para a direita quando a tela (ou o
+   modal) abre, como a linha da logo no login. clip-path corta o
+   desenho num retângulo que vai abrindo; não mexe no tamanho de nada.
+   No modal roda a cada abertura, porque ele sai de display: none. */
+@media (prefers-reduced-motion: no-preference) {
+
+    .page-hero::after,
+    .access-denied-card::before {
+        animation: brand-waves-draw 1100ms var(--ease-emphasized) 150ms backwards;
+    }
+
+    .modal-create-content::before,
+    .modal-edit-content::before,
+    .modal-confirm-content::before {
+        animation: brand-waves-draw var(--duration-slower) var(--ease-emphasized) 80ms backwards;
+    }
+}
+
+@keyframes brand-waves-draw {
+    from {
+        clip-path: inset(0 100% 0 0);
+    }
+
+    to {
+        clip-path: inset(0 0 0 0);
+    }
 }
 
 .page-hero-text {
@@ -719,7 +834,7 @@ input.form-error:focus {
         align-items: center;
         min-height: 176px;
         padding: var(--space-6);
-        background: var(--color-surface);
+        background: var(--gradient-hero-glow), var(--color-surface);
     }
 
     .page-hero::after {
@@ -789,11 +904,26 @@ input.form-error:focus {
 }
 
 .content tbody tr {
-    transition: background var(--duration-fast) ease;
+    transition: background var(--duration-base) var(--ease-out);
 }
 
 .content tbody tr:hover {
     background: var(--color-surface-alt);
+}
+
+/* Do tablet em diante (a tabela é tabela, não cartão) a linha sob o
+   mouse ganha uma barra azul à esquerda, para o olho não se perder numa
+   linha comprida. A barra é sombra interna da primeira célula: box-shadow
+   no <tr> não aparece em tabela com border-collapse. */
+@media (min-width: 768px) {
+
+    .content tbody td:first-child {
+        transition: box-shadow var(--duration-base) var(--ease-out);
+    }
+
+    .content tbody tr:hover td:first-child:not([colspan]) {
+        box-shadow: inset 3px 0 0 var(--color-brand-soft);
+    }
 }
 
 .content tbody tr:last-child td {
@@ -1040,12 +1170,20 @@ input.form-error:focus {
     border: 1px solid var(--color-border-input);
     border-radius: var(--radius-md);
     text-decoration: none;
-    transition: background var(--duration-fast) ease;
+    transition: background var(--duration-base) var(--ease-out),
+        border-color var(--duration-base) var(--ease-out),
+        transform var(--duration-base) var(--ease-out);
 }
 
 .pagination a:hover {
     background: var(--color-surface-hover);
+    border-color: var(--color-brand-soft);
     text-decoration: none;
+}
+
+.pagination a:active {
+    transform: scale(0.97);
+    transition-duration: var(--duration-fast);
 }
 
 .pagination span {
@@ -1130,7 +1268,7 @@ input.form-error:focus {
     color: var(--color-brand-light);
     background: var(--color-surface-hover);
     font-weight: var(--weight-semibold);
-    box-shadow: var(--shadow-sm);
+    box-shadow: inset 0 0 0 1px var(--color-brand-border), var(--shadow-sm);
 }
 
 /* ============================================================
@@ -1152,9 +1290,9 @@ input.form-error:focus {
     justify-content: center;
     padding: var(--space-4);
     background: var(--color-overlay);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
-    animation: gs-modal-in var(--duration-base) ease;
+    backdrop-filter: blur(6px) saturate(120%);
+    -webkit-backdrop-filter: blur(6px) saturate(120%);
+    animation: gs-modal-in var(--duration-slow) var(--ease-out);
 }
 
 .modal-create[hidden],
@@ -1181,8 +1319,8 @@ input.form-error:focus {
         var(--color-surface);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    animation: gs-modal-content-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-highlight), var(--shadow-lg);
+    animation: gs-modal-content-in var(--duration-slow) var(--ease-emphasized);
 }
 
 .modal-create-header {
@@ -1209,11 +1347,12 @@ input.form-error:focus {
     }
 }
 
-/* O modal sobe com uma curva mais elastica, como no tema original. */
+/* O modal sobe e cresce um pouco, com a curva que sai rápido e pousa
+   devagar: parece ter peso, sem quicar. */
 @keyframes gs-modal-content-in {
     from {
         opacity: 0;
-        transform: translateY(18px) scale(0.97);
+        transform: translateY(20px) scale(0.96);
     }
 }
 
@@ -1223,31 +1362,41 @@ input.form-error:focus {
    contrato com frontend/js/app.js e não devem mudar.
    ============================================================ */
 
-/* Entrada suave do bloco principal da página. */
-.gs-enter {
-    opacity: 0;
-    transform: translateY(14px);
-}
+/* A entrada do bloco principal da página (.gs-enter) saiu daqui: agora é
+   CSS puro, em layout.css ("Entrada da página"), e começa na primeira
+   pintura em vez de esperar o JS. */
 
-.gs-enter.gs-visible {
-    opacity: 1;
-    transform: none;
-    transition: opacity var(--duration-slow) ease,
-        transform var(--duration-slow) var(--ease-out);
-}
-
-/* Linhas de tabela em cascata. O índice vem de --gs-i, setado no JS. */
+/* Linhas de tabela e cartões em cascata. O índice vem de --gs-i, que o
+   JS limita (ver animateRowsCascade): numa lista de 50 linhas a última
+   não pode demorar 2 segundos para aparecer. backwards pelo mesmo
+   motivo da entrada da página: nada fica valendo depois do fim. */
 .gs-row {
-    opacity: 0;
-    transform: translateY(6px);
-    animation: gs-row-enter 380ms ease forwards;
-    animation-delay: calc(var(--gs-i, 0) * 45ms);
+    animation: gs-row-enter var(--duration-slow) var(--ease-out) backwards;
+    animation-delay: calc(120ms + var(--gs-i, 0) * 35ms);
 }
 
 @keyframes gs-row-enter {
-    to {
-        opacity: 1;
-        transform: none;
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+/* Busca em tempo real: enquanto o servidor responde, a tabela antiga
+   esmaece (a pessoa vê que algo está acontecendo sem a tela pular); a
+   nova entra com um fade curto. */
+.gs-refreshing {
+    opacity: 0.5;
+    transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.gs-region-in {
+    animation: gs-region-in var(--duration-base) var(--ease-out);
+}
+
+@keyframes gs-region-in {
+    from {
+        opacity: 0.5;
     }
 }
 
@@ -1262,14 +1411,16 @@ input.form-error:focus {
     }
 }
 
-/* Saída animada dos modais. */
+/* Saída animada dos modais. Mais rápida que a entrada: quem fecha já
+   decidiu, não precisa acompanhar. */
 .modal-closing {
-    animation: gs-modal-fade-out 160ms ease forwards;
+    animation: gs-modal-fade-out var(--duration-base) ease forwards;
 }
 
 .modal-closing .modal-create-content,
-.modal-closing .modal-edit-content {
-    animation: gs-modal-content-fade-out 160ms ease forwards;
+.modal-closing .modal-edit-content,
+.modal-closing .modal-confirm-content {
+    animation: gs-modal-content-fade-out var(--duration-base) ease forwards;
 }
 
 @keyframes gs-modal-fade-out {
@@ -1285,15 +1436,16 @@ input.form-error:focus {
     }
 }
 
-/* Onda ao clicar. */
+/* Onda ao clicar. Mais suave que antes (opacidade menor e curva que
+   desacelera): marca o toque sem clarão. */
 .gs-ripple {
     position: absolute;
     border-radius: 50%;
-    background: var(--color-white-45);
+    background: var(--color-white-35);
     transform: scale(0);
-    opacity: 0.55;
+    opacity: 0.5;
     pointer-events: none;
-    animation: gs-ripple-anim 550ms ease-out forwards;
+    animation: gs-ripple-anim var(--duration-slower) var(--ease-out) forwards;
 }
 
 /* Em botões de fundo claro a onda branca não aparece; escurece. */
@@ -1338,13 +1490,17 @@ input.form-error:focus {
     }
 }
 
-body.gs-leaving {
-    animation: gs-page-leave 180ms ease forwards;
+/* Saída de página para navegador sem View Transitions (ver base.css).
+   Só o conteúdo some: antes era o body inteiro, e a barra lateral — que
+   é igual na tela seguinte — piscava junto. */
+body.gs-leaving .main-content {
+    animation: gs-page-leave var(--duration-base) ease forwards;
 }
 
 @keyframes gs-page-leave {
     to {
         opacity: 0;
+        transform: translateY(-6px);
     }
 }
 
@@ -1411,9 +1567,11 @@ body.gs-leaving {
    Toasts
    ============================================================ */
 
+/* Logo abaixo da topbar, e não por cima dela: antes o aviso cobria o
+   nome e o cargo de quem está logado. */
 .gs-toasts {
     position: fixed;
-    top: var(--space-5);
+    top: calc(var(--topbar-height) + var(--space-4));
     right: var(--space-5);
     z-index: var(--z-toast);
     display: flex;
@@ -1424,6 +1582,8 @@ body.gs-leaving {
 }
 
 .gs-toast {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);
@@ -1432,22 +1592,56 @@ body.gs-leaving {
     border: 1px solid var(--color-border-strong);
     border-left-width: 4px;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-highlight), var(--shadow-lg);
     opacity: 0;
-    transform: translateX(24px);
-    transition: opacity var(--duration-base) ease,
-        transform var(--duration-base) var(--ease-out);
+    transform: translateX(32px) scale(0.96);
+    transition: opacity var(--duration-slow) var(--ease-out),
+        transform var(--duration-slow) var(--ease-emphasized);
     pointer-events: auto;
 }
 
 .gs-toast-visible {
     opacity: 1;
-    transform: translateX(0);
+    transform: none;
 }
 
 .gs-toast-leaving {
     opacity: 0;
-    transform: translateX(24px) scale(0.97);
+    transform: translateX(32px) scale(0.96);
+    transition-duration: var(--duration-base);
+}
+
+/* Barra do tempo que falta para o aviso sumir. A duração vem do JS
+   (--gs-toast-duration), a cor é a do texto do aviso (verde ou
+   vermelho). Mouse em cima pausa a barra — e o JS pausa o relógio junto.
+   Com menos movimento pedido ela some: sem animação, ficaria vazia. */
+.gs-toast-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: currentColor;
+    opacity: 0.55;
+    transform-origin: left center;
+    animation: gs-toast-timer var(--gs-toast-duration, 4200ms) linear forwards;
+}
+
+.gs-toast:hover .gs-toast-progress {
+    animation-play-state: paused;
+}
+
+@keyframes gs-toast-timer {
+    to {
+        transform: scaleX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .gs-toast-progress {
+        display: none;
+    }
 }
 
 .gs-toast-success {
@@ -1536,9 +1730,9 @@ body.gs-leaving {
         var(--color-surface);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-highlight), var(--shadow-lg);
     text-align: center;
-    animation: gs-modal-content-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    animation: gs-modal-content-in var(--duration-slow) var(--ease-emphasized);
 }
 
 .modal-confirm-icon {
@@ -1550,6 +1744,22 @@ body.gs-leaving {
     color: var(--color-danger);
     background: var(--color-danger-tint);
     border-radius: var(--radius-full);
+}
+
+/* O ícone chega um instante depois do cartão, com um pequeno salto:
+   chama o olho para o aviso antes do texto. */
+@media (prefers-reduced-motion: no-preference) {
+
+    .modal-confirm-icon {
+        animation: gs-icon-pop var(--duration-slower) var(--ease-spring) 90ms backwards;
+    }
+}
+
+@keyframes gs-icon-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.5) rotate(-12deg);
+    }
 }
 
 .modal-confirm-icon svg {

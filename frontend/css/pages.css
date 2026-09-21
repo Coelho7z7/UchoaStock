@@ -1032,6 +1032,17 @@
     border-radius: var(--radius-lg);
 }
 
+/* O botão de cada cartão vai para a base, para os três ficarem na mesma
+   linha mesmo com formulários de alturas diferentes lado a lado. O campo
+   antes dele guarda a distância que o margin-top: auto tirou. */
+.asset-action-card button[type="submit"] {
+    margin-top: auto;
+}
+
+.asset-action-card > :nth-last-child(2) {
+    margin-bottom: var(--space-4);
+}
+
 .asset-action-card h4 {
     margin: 0;
     font-size: var(--text-base);
