@@ -77,6 +77,12 @@ func canEditSite(user *models.User, siteID int) bool {
 	return can(user, PermManageSites) && canActOnSite(user, siteID)
 }
 
+// canMoveAssetAt indica se o usuário pode transferir e mudar a situação
+// de um bem que está na obra siteID.
+func canMoveAssetAt(user *models.User, siteID int) bool {
+	return can(user, PermMoveAsset) && canActOnSite(user, siteID)
+}
+
 // requestActor traduz as permissões do usuário para o service de
 // solicitações. O service confere as regras (obra, autor, própria
 // solicitação) só com essas flags, sem saber nome de cargo.

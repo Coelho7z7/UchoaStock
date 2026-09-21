@@ -438,6 +438,40 @@ func createTablesTx(tx *sql.Tx) error {
 	CREATE UNIQUE INDEX IF NOT EXISTS idx_inventarios_um_aberto_por_obra
 		ON inventarios (obra_id) WHERE status IN ('EM_CONTAGEM', 'AGUARDANDO_APROVACAO');
 
+	-- Patrimônio: ferramentas e equipamentos que não se gastam (betoneira,
+	-- andaime, furadeira). Diferente do material, cada bem é uma unidade
+	-- com número próprio (a plaqueta) e está numa obra só. situacao é
+	-- 'EM_USO', 'MANUTENCAO' ou 'BAIXADO': bem baixado não é apagado,
+	-- porque o histórico aponta para ele.
+	CREATE TABLE IF NOT EXISTS patrimonios (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		numero TEXT NOT NULL UNIQUE,
+		nome TEXT NOT NULL,
+		descricao TEXT NOT NULL DEFAULT '',
+		obra_id INTEGER NOT NULL REFERENCES obras(id),
+		situacao TEXT NOT NULL DEFAULT 'EM_USO',
+		criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	-- Histórico do bem. acao é 'CADASTRO', 'TRANSFERENCIA', 'SITUACAO' ou
+	-- 'EDICAO'. obra_origem_id e obra_destino_id só na transferência (no
+	-- cadastro, só o destino); situacao é a situação nova, só quando ela
+	-- muda.
+	CREATE TABLE IF NOT EXISTS patrimonio_movimentacoes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		patrimonio_id INTEGER NOT NULL REFERENCES patrimonios(id),
+		usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+		acao TEXT NOT NULL,
+		obra_origem_id INTEGER REFERENCES obras(id),
+		obra_destino_id INTEGER REFERENCES obras(id),
+		situacao TEXT NOT NULL DEFAULT '',
+		observacao TEXT NOT NULL DEFAULT '',
+		criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_patrimonios_obra ON patrimonios (obra_id);
+	CREATE INDEX IF NOT EXISTS idx_patrimonio_movimentacoes_patrimonio ON patrimonio_movimentacoes (patrimonio_id);
+
 	CREATE INDEX IF NOT EXISTS idx_solicitacoes_obra_status ON solicitacoes (obra_id, status);
 	CREATE INDEX IF NOT EXISTS idx_solicitacoes_solicitante ON solicitacoes (solicitante_id);
 	CREATE INDEX IF NOT EXISTS idx_solicitacao_itens_solicitacao ON solicitacao_itens (solicitacao_id);

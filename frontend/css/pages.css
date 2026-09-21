@@ -979,3 +979,80 @@
         flex: 1;
     }
 }
+
+/* ============================================================
+   Patrimônio
+   ============================================================ */
+
+/* Número da plaqueta: algarismos de mesma largura, para a coluna
+   alinhar. */
+.asset-number {
+    font-weight: var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.asset-name {
+    font-weight: var(--weight-semibold);
+}
+
+/* Selos de situação. O sufixo vem do banco (asset-status-{{ .Status }}),
+   por isso fica em maiúsculas: não renomear. */
+.asset-status-EM_USO {
+    color: var(--color-success-text);
+    background: var(--color-success-tint);
+    border-color: var(--color-success);
+}
+
+.asset-status-MANUTENCAO {
+    color: var(--color-warning-text);
+    background: var(--color-warning-tint);
+    border-color: var(--color-warning);
+}
+
+.asset-status-BAIXADO {
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-color: var(--color-border-strong);
+}
+
+/* Cartões de ação do detalhe (transferir, mudar situação, editar): um
+   embaixo do outro no celular, lado a lado a partir do tablet. */
+.asset-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.asset-action-card {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.asset-action-card h4 {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--color-text);
+}
+
+/* Histórico: a cor da borda segue a ação (asset-event-{{ .Action }}). */
+.asset-event-CADASTRO {
+    border-left-color: var(--color-brand-soft);
+}
+
+.asset-event-TRANSFERENCIA {
+    border-left-color: var(--color-success);
+}
+
+.asset-event-SITUACAO {
+    border-left-color: var(--color-warning);
+}
+
+@media (min-width: 768px) {
+    .asset-actions {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+}

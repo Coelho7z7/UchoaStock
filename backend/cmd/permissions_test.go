@@ -17,6 +17,7 @@ var allPermissions = []Permission{
 	PermManageUsers, PermManageSites, PermReopenSite, PermAllSites,
 	PermManageSuppliers,
 	PermViewInventory, PermCountInventory, PermApproveInventory, PermApproveOwnInventory,
+	PermEditAsset, PermMoveAsset,
 }
 
 // adminPermissions é tudo menos aprovar a própria solicitação, que fica só
@@ -28,6 +29,7 @@ var adminPermissions = []Permission{
 	PermManageUsers, PermManageSites, PermReopenSite, PermAllSites,
 	PermManageSuppliers,
 	PermViewInventory, PermCountInventory, PermApproveInventory,
+	PermEditAsset, PermMoveAsset,
 }
 
 func TestCanEveryRoleEveryPermission(t *testing.T) {
@@ -45,12 +47,14 @@ func TestCanEveryRoleEveryPermission(t *testing.T) {
 			PermViewAllMovements, PermExportMovements,
 			PermManageUsers, PermManageSites,
 			PermViewInventory, PermCountInventory, PermApproveInventory,
+			PermMoveAsset,
 		}},
 		{services.RoleStorekeeper, []Permission{
 			PermMoveStock,
 			PermCreateRequest, PermServeRequest, PermViewAllRequests,
 			PermViewAllMovements, PermExportMovements,
 			PermViewInventory, PermCountInventory,
+			PermMoveAsset,
 		}},
 		{services.RoleRequester, []Permission{PermCreateRequest}},
 		{services.RoleAuditor, []Permission{PermViewAllRequests, PermViewAllMovements, PermExportMovements, PermViewInventory}},

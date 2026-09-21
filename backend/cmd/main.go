@@ -204,6 +204,8 @@ func registerRoutes() {
 	http.HandleFunc("/estoque", withUser(stockHandler))
 
 	http.HandleFunc("/fornecedores", withUser(supplierHandler))
+	http.HandleFunc("/patrimonio", withUser(assetListHandler))
+	http.HandleFunc("/patrimonio/{id}", withUser(assetDetailHandler))
 
 	http.HandleFunc("/movimentacoes", withUser(movementHandler))
 	http.HandleFunc("/movimentacoes/exportar", withUser(movementExportHandler))

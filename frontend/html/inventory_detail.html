@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/css/base.css?v=9">
     <link rel="stylesheet" href="/css/components.css?v=18">
     <link rel="stylesheet" href="/css/layout.css?v=16">
-    <link rel="stylesheet" href="/css/pages.css?v=20">
+    <link rel="stylesheet" href="/css/pages.css?v=21">
 </head>
 
 <body class="inventory-detail-page">
@@ -32,6 +32,7 @@
                 <a href="/obras"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4v18M12 9h7v12M8 9h1M8 13h1M8 17h1M15 13h1M15 17h1"></path></svg>Obras</a>
                 <a href="/materiais"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"></path><path d="m4 7.5 8 4.5 8-4.5M12 12v9"></path></svg>Materiais</a>
                 <a href="/fornecedores"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3z"></path><path d="M14 10h4l3 3v3h-7"></path><circle cx="7" cy="17.5" r="1.5"></circle><circle cx="17" cy="17.5" r="1.5"></circle></svg>Fornecedores</a>
+                <a href="/patrimonio"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>Patrimônio</a>
                 <a href="/movimentacoes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3M18 7a6 6 0 0 1 0 10M6 17A6 6 0 0 1 6 7"></path></svg>Movimentações</a>
                 <a class="tab-active" href="/inventarios"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6 1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17"></path><path d="M11 6h9M11 12h9M11 18h9"></path></svg>Inventários{{ if .Nav.InventoryPending }}<span class="nav-badge nav-badge-pending" title="Inventários aguardando aprovação" aria-label="{{ .Nav.InventoryPending }} aguardando aprovação">{{ .Nav.InventoryPending }}</span>{{ end }}</a>
                 <a href="/solicitacoes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3H9z"></path><path d="M9 5H6v16h12V5h-3"></path><path d="M9 12h6M9 16h4"></path></svg>Solicitações{{ template "nav-request-badges" .Nav }}</a>

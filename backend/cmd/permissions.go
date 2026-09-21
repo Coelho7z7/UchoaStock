@@ -69,6 +69,15 @@ const (
 	// pessoa participou. Nenhum cargo recebe: só o superadmin, como
 	// PermApproveOwnRequest.
 	PermApproveOwnInventory Permission = "inventario.aprovar_propria"
+
+	// PermEditAsset é cadastrar bem do patrimônio, editar número, nome e
+	// descrição e reativar bem baixado. Como o catálogo de materiais, é só
+	// do administrador.
+	PermEditAsset Permission = "patrimonio.editar"
+	// PermMoveAsset é transferir bem para outra obra e mudar a situação
+	// dele (manutenção, baixa). Quem não tem PermAllSites só mexe nos bens
+	// que estão na própria obra.
+	PermMoveAsset Permission = "patrimonio.movimentar"
 )
 
 // rolePermissions é a fonte única da verdade sobre o que cada cargo pode
@@ -76,7 +85,8 @@ const (
 // services.validRoles). O SuperAdmin não aparece: can() libera tudo
 // para ele.
 //
-// Ver dashboard, materiais e estoque não é permissão: todo cargo vê.
+// Ver dashboard, materiais, estoque e patrimônio não é permissão: todo
+// cargo vê.
 var rolePermissions = map[string][]Permission{
 	services.RoleAdmin: {
 		PermEditMaterial, PermRemoveMaterial, PermMoveStock,
@@ -85,6 +95,7 @@ var rolePermissions = map[string][]Permission{
 		PermManageUsers, PermManageSites, PermReopenSite, PermAllSites,
 		PermManageSuppliers,
 		PermViewInventory, PermCountInventory, PermApproveInventory,
+		PermEditAsset, PermMoveAsset,
 	},
 	// O gestor age na obra dele (sem PermAllSites) e não mexe no catálogo
 	// de materiais, que é da empresa toda. Na gestão de usuários há mais
@@ -95,6 +106,7 @@ var rolePermissions = map[string][]Permission{
 		PermViewAllMovements, PermExportMovements,
 		PermManageUsers, PermManageSites,
 		PermViewInventory, PermCountInventory, PermApproveInventory,
+		PermMoveAsset,
 	},
 	// O almoxarife conta o inventário, mas quem aprova o ajuste é o gestor.
 	services.RoleStorekeeper: {
@@ -102,6 +114,7 @@ var rolePermissions = map[string][]Permission{
 		PermCreateRequest, PermServeRequest, PermViewAllRequests,
 		PermViewAllMovements, PermExportMovements,
 		PermViewInventory, PermCountInventory,
+		PermMoveAsset,
 	},
 	// Sem PermViewAllMovements e PermViewAllRequests, o solicitante vê só
 	// as movimentações que registrou e as solicitações que criou. Também não
