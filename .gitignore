@@ -42,3 +42,6 @@ Thumbs.db
 *.log
 *.tmp
 tmp/
+
+# Configuração pessoal do Claude Code (as skills do projeto são versionadas)
+.claude/settings.local.json
