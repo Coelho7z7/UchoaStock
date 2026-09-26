@@ -4,11 +4,17 @@ UchôaStock é um sistema de controle de estoque de materiais de obra, desenvolv
 
 ## Overview
 
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/cafec4de-899a-4948-ad28-ea43471a1dfe" />
+
+
 Obras costumam perder tempo e material por falta de controle: ninguém sabe quanto cimento sobrou nem quando o vergalhão vai acabar. O UchôaStock resolve isso oferecendo um sistema centralizado onde é possível cadastrar materiais, acompanhar quantidades, registrar entradas e saídas, e ser avisado do que está prestes a acabar.
 
 ### Key Features
 
 * **Dashboard:** visão geral do estoque, com alerta dos materiais prestes a acabar
+
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/db879c39-3f41-4fc3-9ce2-057df443b64a" />
+
 
 * **Materiais:** cadastro, edição e remoção de materiais de obra
 
