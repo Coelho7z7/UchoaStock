@@ -57,13 +57,13 @@ As contas padrão são criadas automaticamente na inicialização, pelo seed, qu
 
 | Conta | Email | Role | Variável de ambiente da senha |
 |---|---|---|---|
-| SuperAdmin | `superadmin@gmail.com` | `superadmin` | `SEED_SUPERADMIN_PASSWORD` |
-| Administrador | `admin@gmail.com` | `admin` | `SEED_ADMIN_PASSWORD` |
-| Gestor | `gerente@gmail.com` | `gestor` | `SEED_GESTOR_PASSWORD` |
-| Almoxarife | `almoxarife@gmail.com` | `almoxarife` | `SEED_ALMOXARIFE_PASSWORD` |
-| Solicitante | `solicitante@gmail.com` | `solicitante` | `SEED_SOLICITANTE_PASSWORD` |
-| Auditor | `auditor@gmail.com` | `auditor` | `SEED_AUDITOR_PASSWORD` |
-| Usuário (somente leitura) | `usuario@gmail.com` | `basico` | `SEED_USUARIO_PASSWORD` |
+| SuperAdmin | `example@gmail.com` | `superadmin` | `SEED_SUPERADMIN_PASSWORD` |
+| Administrador | `example@gmail.com` | `admin` | `SEED_ADMIN_PASSWORD` |
+| Gestor | `example@gmail.com` | `gestor` | `SEED_GESTOR_PASSWORD` |
+| Almoxarife | `example@gmail.com` | `almoxarife` | `SEED_ALMOXARIFE_PASSWORD` |
+| Solicitante | `example@gmail.com` | `solicitante` | `SEED_SOLICITANTE_PASSWORD` |
+| Auditor | `example@gmail.com` | `auditor` | `SEED_AUDITOR_PASSWORD` |
+| Usuário (somente leitura) | `example@gmail.com` | `basico` | `SEED_USUARIO_PASSWORD` |
 
 Os cargos disponíveis são Administrador (`admin`), Gestor (`gestor`), Almoxarife (`almoxarife`), Solicitante (`solicitante`) e Auditor (`auditor`). O que cada um pode fazer está em `backend/web/permissions.go` e no `INFORMACOES.MD`. A conta `usuario@gmail.com` é de demonstração: vê as telas, mas não altera nada. Bancos antigos são migrados sozinhos na inicialização: `gerente` vira `gestor` e `basico` vira `solicitante` (menos a conta de demonstração).
 
