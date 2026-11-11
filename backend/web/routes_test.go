@@ -103,3 +103,52 @@ func TestStaticFilesCache(t *testing.T) {
 		t.Errorf("arquivo inexistente: status %d, esperado 404", got)
 	}
 }
+
+// Toda resposta sai com os cabeçalhos de securityHeaders, inclusive a de
+// um POST barrado pela proteção de CSRF (o embrulho fica por fora dela).
+func TestSecurityHeaders(t *testing.T) {
+	handler := NewHandler()
+	want := map[string]string{
+		"Content-Security-Policy": "frame-ancestors 'none'",
+		"X-Frame-Options":         "DENY",
+		"X-Content-Type-Options":  "nosniff",
+		"Referrer-Policy":         "same-origin",
+	}
+
+	blocked := httptest.NewRequest(http.MethodPost, "/css/tokens.css", nil)
+	blocked.Header.Set("Sec-Fetch-Site", "cross-site")
+	for _, request := range []*http.Request{
+		httptest.NewRequest(http.MethodGet, "/css/tokens.css", nil),
+		blocked,
+	} {
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		for name, value := range want {
+			if got := recorder.Header().Get(name); got != value {
+				t.Errorf("%s %s: %s = %q, esperado %q", request.Method, request.URL, name, got, value)
+			}
+		}
+	}
+}
+
+// Sair só por POST: um GET para /logout (um <img> em outro site, por
+// exemplo) não apaga a sessão. O POST sem cookie não toca no banco e
+// volta para o login.
+func TestLogoutRequiresPost(t *testing.T) {
+	handler := NewHandler()
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/logout", nil))
+	if recorder.Code != http.StatusMethodNotAllowed {
+		t.Errorf("GET /logout: status %d, esperado 405", recorder.Code)
+	}
+	if allow := recorder.Header().Get("Allow"); allow != http.MethodPost {
+		t.Errorf("GET /logout: Allow = %q, esperado POST", allow)
+	}
+
+	recorder = httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/logout", nil))
+	if recorder.Code != http.StatusSeeOther || recorder.Header().Get("Location") != "/" {
+		t.Errorf("POST /logout: status %d, Location %q, esperado 303 para /", recorder.Code, recorder.Header().Get("Location"))
+	}
+}

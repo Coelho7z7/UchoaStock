@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	database "uchoastock/backend/database"
@@ -75,11 +78,44 @@ func main() {
 		IdleTimeout:       2 * time.Minute,
 	}
 
-	fmt.Println("Servidor web disponível na porta", port)
-	if err := server.ListenAndServe(); err != nil {
+	// Desligamento gracioso. Num redeploy o Railway manda o sinal SIGTERM
+	// antes de matar o processo; o Ctrl+C no terminal manda o SIGINT. Sem
+	// tratar o sinal, o processo morria na hora: uma movimentação no meio
+	// do caminho perdia a resposta (a pessoa não sabia se tinha gravado) e
+	// o banco nunca era fechado.
+	//
+	// signal.NotifyContext devolve um contexto que é "cancelado" quando um
+	// desses sinais chega. O servidor roda numa goroutine (uma função que
+	// executa em paralelo) para o main ficar livre esperando o sinal.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	serverErr := make(chan error, 1)
+	go func() {
+		fmt.Println("Servidor web disponível na porta", port)
+		serverErr <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErr:
+		// Nem chegou a subir (porta ocupada, por exemplo).
 		fmt.Println("Erro no servidor web:", err)
+		database.DB.Close()
 		os.Exit(1)
+	case <-ctx.Done():
 	}
+
+	// Shutdown para de aceitar conexões novas e espera as requisições em
+	// andamento terminarem, até o limite: depois dele, encerra assim mesmo.
+	// O limite fica abaixo dos 30 segundos que o Railway espera antes de
+	// forçar o fim do processo.
+	fmt.Println("Sinal de encerramento recebido: terminando as requisições em andamento...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		fmt.Println("Erro ao encerrar o servidor web:", err)
+	}
+	fmt.Println("Servidor encerrado.")
 }
 
 // runCommand executa um comando administrativo (ver cli.go) e encerra.

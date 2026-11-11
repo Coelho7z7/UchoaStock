@@ -92,7 +92,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // logoutHandler apaga a sessão atual e redireciona para o login.
+//
+// Só aceita POST. Sair do sistema altera dados (apaga a sessão), e a
+// proteção contra CSRF só confere POST: com GET, qualquer site podia
+// deslogar quem estivesse no UchôaStock só colocando na página um
+// <img src="https://.../logout">.
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
 	if hash, ok := sessionTokenHash(r); ok {
 		if err := services.DeleteSession(hash); err != nil {
 			log.Println("erro ao apagar a sessão no logout:", err)

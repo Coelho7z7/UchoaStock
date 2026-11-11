@@ -57,7 +57,32 @@ func NewHandler() http.Handler {
 	mux.HandleFunc("/usuarios", withUser(userHandler))
 	mux.HandleFunc("/minha-senha", withUser(myPasswordHandler))
 
-	return csrfProtection().Handler(mux)
+	return securityHeaders(csrfProtection().Handler(mux))
+}
+
+// securityHeaders acrescenta a toda resposta cabeçalhos que pedem ao
+// navegador para se proteger:
+//   - frame-ancestors 'none' e X-Frame-Options DENY: nenhum site pode
+//     abrir o UchôaStock dentro de um <iframe>. Sem isso, uma página
+//     maliciosa podia carregar o sistema invisível por cima de um botão
+//     dela e fazer a pessoa clicar em "Remover" sem saber (clickjacking).
+//     A proteção de CSRF não pega esse caso, porque o clique acontece na
+//     página verdadeira. O X-Frame-Options é o mesmo aviso para
+//     navegadores antigos.
+//   - nosniff: o navegador usa o tipo que o servidor declarou (CSS é CSS)
+//     em vez de "adivinhar" pelo conteúdo do arquivo.
+//   - Referrer-Policy same-origin: ao clicar num link para fora, o
+//     endereço da tela (que pode ter busca e ID na query string) não vai
+//     junto para o outro site.
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := w.Header()
+		header.Set("Content-Security-Policy", "frame-ancestors 'none'")
+		header.Set("X-Frame-Options", "DENY")
+		header.Set("X-Content-Type-Options", "nosniff")
+		header.Set("Referrer-Policy", "same-origin")
+		next.ServeHTTP(w, r)
+	})
 }
 
 // csrfProtection barra POST que vem de outro site (CSRF): uma página

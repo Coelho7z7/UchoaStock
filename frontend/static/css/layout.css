@@ -308,6 +308,12 @@ body.mobile-menu-open .sidebar {
         border-color var(--duration-fast) ease;
 }
 
+/* "Sair" é um <button> dentro de um formulário (logout por POST): ocupa
+   a largura toda, como o link "Minha senha" ao lado. */
+.sidebar-logout {
+    width: 100%;
+}
+
 .sidebar-logout:hover {
     color: var(--color-danger-text);
     background: var(--color-danger-tint);
